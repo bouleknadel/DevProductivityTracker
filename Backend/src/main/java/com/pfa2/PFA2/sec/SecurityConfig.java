@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll() // Permettre uniquement POST pour /user
                         .requestMatchers(HttpMethod.PUT, "/userupdate").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**","/email").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -62,7 +63,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Frontend React
+        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Frontend React
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Méthodes autorisées
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // En-têtes autorisés
         configuration.setAllowCredentials(true); // Si vous avez besoin de gérer les cookies
