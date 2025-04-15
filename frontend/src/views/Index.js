@@ -2,7 +2,9 @@ import { useState,useEffect } from 'react';
 import classnames from 'classnames';
 import Chart from 'chart.js';
 import { Line, Bar, Pie, Radar } from 'react-chartjs-2';
-import {getSessionByWeek} from '../services/statsService';
+import {getSessionByWeek,getInterupptionByWeek,getCodingHoursByWeek,getCodingHoursByMonth,getSessionDurationStats,
+  getConcentrationData,getCodeVsErrorsData
+} from '../services/statsService';
 import { useWebSocket } from '../hooks/useWebSocket';
 import {
   Button,
@@ -34,48 +36,93 @@ import Header from 'components/Headers/Header.js';
 
 const Index = (props) => {
   const [activeNav, setActiveNav] = useState(1);
-  const [chartExample1Data, setChartExample1Data] = useState('data1');
   const [sessionsData, setSessionsData] = useState(chartExample2.data);
+  const [chart4Data, setChart4Data] = useState(sessionDurationChart.data);
+  const [interruptionData, setInterruotionData] = useState(interruptionsChart.data);
+  const [codeVsErrorsData, setCodeVsErrorsData] = useState(codeVsErrorsChart.data);
+  const [codingHoursValues, setCodingHoursValues] = useState({
+    monthly: [15, 22, 28, 25, 32, 24, 30, 35], // Valeurs statiques par défaut (mois)
+    weekly: [4.5, 6.2, 5.8, 7.1, 5.5, 3.2, 2.0] // Valeurs statiques par défaut (semaine)
+  });
+  const [foncusTimeData, setFoncusTimeData] = useState(focusTimeChart.data);
+  const fetchSessionsData = async () => {
+    try {
+      const data11 = await getCodingHoursByMonth();
+      const data12 = await getCodingHoursByWeek();
+      const data = await getSessionByWeek();
+      const data2 = await getInterupptionByWeek();
+      const data3=await getSessionDurationStats();
+      const data4=await getConcentrationData();
+      const data5=await getCodeVsErrorsData();
+      console.log("data5",data5.errors)
+      // Mettre à jour les données avec ce que vous récupérez du serveur
+      setSessionsData({
+        ...chartExample2.data,
+        datasets: [
+          {
+            ...chartExample2.data.datasets[0],
+            data: data.counts || data // Adaptez selon la structure de vos données
+          }
+        ]
+      });
+      setCodeVsErrorsData({
+        ...codeVsErrorsChart.data,
+        datasets: [
+          {
+            ...codeVsErrorsChart.data.datasets[0],
+            data:   data5.lines.counts ||  data5.lines // Adaptez selon la structure de vos données
+          },
+          {
+            ...codeVsErrorsChart.data.datasets[1],
+            data:  data5.errors.counts ||  data5.errors// Adaptez selon la structure de vos données
+          }
+
+        ]
+      });
+      setFoncusTimeData({
+        ...focusTimeChart.data,
+        datasets: [
+          {
+            ...focusTimeChart.data.datasets[0],
+            data: data4.counts || data4 // Adaptez selon la structure de vos données
+          }
+        ]
+      });
+      setInterruotionData({
+        ...interruptionsChart.data,
+        datasets: [
+          {
+            ...interruptionsChart.data.datasets[0],
+            data: data2.counts || data2 // Adaptez selon la structure de vos données
+          }
+        ]
+      });
+      setChart4Data({
+        ...sessionDurationChart.data,
+        datasets: [
+          {
+            ...sessionDurationChart.data.datasets[0],
+            data: data3.counts || data3 // Adaptez selon la structure de vos données
+          }
+        ]
+      });
+      setCodingHoursValues({
+        monthly: data11,
+        weekly:  data12
+      });
+    } catch (err) {
+      console.error("Erreur lors de la récupération des données:", err);
+    }
+  };
   useEffect(() => {
-    const fetchSessionsData = async () => {
-      try {
-        const data = await getSessionByWeek();
-        // Mettre à jour les données avec ce que vous récupérez du serveur
-        setSessionsData({
-          ...chartExample2.data,
-          datasets: [
-            {
-              ...chartExample2.data.datasets[0],
-              data: data.counts || data // Adaptez selon la structure de vos données
-            }
-          ]
-        });
-      } catch (err) {
-        console.error("Erreur lors de la récupération des données:", err);
-      }
-    };
+   
 
     fetchSessionsData();
   }, []);
     // Utilisez WebSocket pour les mises à jour en temps réel
     useWebSocket('ws://localhost:8083/ws/sessions', (wsData) => {
       console.log('Reçu une mise à jour via WebSocket:', wsData);
-      const fetchSessionsData = async () => {
-        try {
-          const data = await getSessionByWeek();
-          setSessionsData({
-            ...chartExample2.data,
-            datasets: [
-              {
-                ...chartExample2.data.datasets[0],
-                data: data.counts || data
-              }
-            ]
-          });
-        } catch (err) {
-          console.error("Erreur lors de la mise à jour des données:", err);
-        }
-      };
+     
       
       fetchSessionsData();
     });
@@ -88,7 +135,25 @@ const Index = (props) => {
   const toggleNavs = (e, index) => {
     e.preventDefault();
     setActiveNav(index);
-    setChartExample1Data('data' + index);
+    const selectedData = index === 1 ? chartExample1.data1 : chartExample1.data2;
+    
+  };
+  const getChartData = () => {
+    // On récupère la configuration de base de chartExample1
+    const baseConfig = activeNav === 1 
+      ? chartExample1.data1() 
+      : chartExample1.data2();
+    
+    // On ne modifie que les données (data) en gardant tout le reste identique
+    return {
+      ...baseConfig,
+      datasets: baseConfig.datasets.map(dataset => ({
+        ...dataset,
+        data: activeNav === 1 
+          ? codingHoursValues.monthly 
+          : codingHoursValues.weekly
+      }))
+    };
   };
 
   return (
@@ -138,7 +203,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Line
-                    data={chartExample1[chartExample1Data]}
+                     data={getChartData()}
                     options={chartExample1.options}
                   />
                 </div>
@@ -179,7 +244,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Bar
-                    data={interruptionsChart.data}
+                    data={interruptionData}
                     options={interruptionsChart.options}
                   />
                 </div>
@@ -198,7 +263,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Pie
-                    data={sessionDurationChart.data}
+                    data={chart4Data}
                     options={sessionDurationChart.options}
                   />
                 </div>
@@ -219,7 +284,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Radar
-                    data={focusTimeChart.data}
+                    data={foncusTimeData}
                     options={focusTimeChart.options}
                   />
                 </div>
@@ -236,7 +301,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Line
-                    data={codeVsErrorsChart.data}
+                    data={codeVsErrorsData}
                     options={codeVsErrorsChart.options}
                   />
                 </div>

@@ -42,11 +42,11 @@ axiosInstance.interceptors.response.use(
     // Gérer les erreurs de réponse
     if (error.response) {
       // Exemple: si une erreur 401 (non autorisé) est renvoyée
-      if (error.response.status === 401) {
+      if (error.response.status === 401 || error.response.status === 403) {
         // Vous pouvez ajouter une logique pour rediriger l'utilisateur vers la page de connexion
         console.error("Non autorisé, veuillez vous reconnecter");
         // Optionnel : redirection vers la page de login
-        // window.location.href = '/login';
+        window.location.href = '/auth/login';
       }
     }
     return Promise.reject(error);

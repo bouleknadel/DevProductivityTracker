@@ -12,5 +12,5 @@ import java.util.List;
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findByUserAndStartTimeBetween(AppUser user, LocalDateTime start, LocalDateTime end);
-
+    List<Session> findByUser(AppUser user);
 }

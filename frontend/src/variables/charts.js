@@ -508,18 +508,24 @@ let focusTimeChart = {
     }
   },
   data: {
-    labels: [
-      "8h-10h", 
-      "10h-12h", 
-      "12h-14h", 
-      "14h-16h", 
-      "16h-18h", 
-      "18h-20h"
-    ],
+    "labels": [
+    "00h-02h",
+    "02h-04h",
+    "04h-06h",
+    "06h-08h",
+    "08h-10h",
+    "10h-12h",
+    "12h-14h",
+    "14h-16h",
+    "16h-18h",
+    "18h-20h",
+    "20h-22h",
+    "22h-24h"
+  ],
     datasets: [
       {
         label: "Niveau de concentration",
-        data: [5, 8, 6, 7, 9, 7],
+        "data": [5, 3, 2, 4, 7, 8, 6, 7, 9, 7, 5, 3],
         backgroundColor: "rgba(94, 114, 228, 0.2)",
         borderColor: colors.theme.primary,
         pointBorderColor: "#fff",
