@@ -1,4 +1,4 @@
-// reactstrap components
+import React, { useState } from 'react';
 import {
   Button,
   Card,
@@ -13,8 +13,26 @@ import {
   Row,
   Col,
 } from 'reactstrap';
+import { login }  from '../../services/AuthService';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    try {
+      const data = await login(email, password);
+      localStorage.setItem('access_token', data.access_token);
+      navigate('/admin');
+    } catch (error) {
+      setErrorMessage('Identifiants invalides. Veuillez réessayer.');
+    }
+  };
+
   return (
     <>
       <Col lg="5" md="7">
@@ -26,7 +44,7 @@ const Login = () => {
             </div>
           </CardHeader>
           <CardBody className="px-lg-5 py-lg-5">
-            <Form role="form">
+            <Form role="form" onSubmit={handleLogin}>
               <FormGroup className="mb-3">
                 <InputGroup className="input-group-alternative">
                   <InputGroupAddon addonType="prepend">
@@ -35,9 +53,11 @@ const Login = () => {
                     </InputGroupText>
                   </InputGroupAddon>
                   <Input
-                    placeholder="Email"
-                    type="email"
+                    placeholder="nom d'utilisateur
+"
                     autoComplete="new-email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </InputGroup>
               </FormGroup>
@@ -52,6 +72,8 @@ const Login = () => {
                     placeholder="Mot de passe"
                     type="password"
                     autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </InputGroup>
               </FormGroup>
@@ -68,8 +90,11 @@ const Login = () => {
                   <span className="text-muted">Se souvenir de moi</span>
                 </label>
               </div>
+              {errorMessage && (
+                <div className="text-danger text-center mt-2">{errorMessage}</div>
+              )}
               <div className="text-center">
-                <Button className="my-4" color="primary" type="button">
+                <Button className="my-4" color="primary" type="submit">
                   Connexion
                 </Button>
               </div>

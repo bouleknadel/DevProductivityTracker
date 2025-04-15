@@ -16,7 +16,7 @@ axiosInstance.interceptors.request.use(
     }
 
     // Récupérer le token d'accès depuis localStorage
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpbHlhc3MiLCJleHAiOjE3NDQ0ODc2ODMsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4My9sb2dpbiIsInJvbGVzIjpbXX0.q8rLDV72rsYODUw3gp22Ztsz7ZJXLxfutXgnuCg1U7A"//localStorage.getItem("access_token");
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpbHlhc3MiLCJleHAiOjE3NDQ5MTYwMjEsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4My9sb2dpbiIsInJvbGVzIjpbXX0.MmgSvYy-Eie0TTq_VpinTS08kui7-F06E9lAJS-ia1Q"//localStorage.getItem("access_token");
 
     // Si le token existe, l'ajouter dans l'en-tête Authorization
     if (token) {

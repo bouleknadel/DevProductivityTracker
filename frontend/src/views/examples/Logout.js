@@ -6,7 +6,7 @@ const Logout = () => {
 
   useEffect(() => {
     // Effacer le token d'authentification du localStorage
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('access_token');
 
     // Rediriger vers la page de connexion
     navigate('/auth/login');

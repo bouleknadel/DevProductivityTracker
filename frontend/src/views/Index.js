@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import classnames from 'classnames';
 import Chart from 'chart.js';
 import { Line, Bar, Pie, Radar } from 'react-chartjs-2';
+import {getSessionByWeek} from '../services/statsService';
+import { useWebSocket } from '../hooks/useWebSocket';
 import {
   Button,
   Card,
@@ -33,6 +35,51 @@ import Header from 'components/Headers/Header.js';
 const Index = (props) => {
   const [activeNav, setActiveNav] = useState(1);
   const [chartExample1Data, setChartExample1Data] = useState('data1');
+  const [sessionsData, setSessionsData] = useState(chartExample2.data);
+  useEffect(() => {
+    const fetchSessionsData = async () => {
+      try {
+        const data = await getSessionByWeek();
+        // Mettre à jour les données avec ce que vous récupérez du serveur
+        setSessionsData({
+          ...chartExample2.data,
+          datasets: [
+            {
+              ...chartExample2.data.datasets[0],
+              data: data.counts || data // Adaptez selon la structure de vos données
+            }
+          ]
+        });
+      } catch (err) {
+        console.error("Erreur lors de la récupération des données:", err);
+      }
+    };
+
+    fetchSessionsData();
+  }, []);
+    // Utilisez WebSocket pour les mises à jour en temps réel
+    useWebSocket('ws://localhost:8083/ws/sessions', (wsData) => {
+      console.log('Reçu une mise à jour via WebSocket:', wsData);
+      const fetchSessionsData = async () => {
+        try {
+          const data = await getSessionByWeek();
+          setSessionsData({
+            ...chartExample2.data,
+            datasets: [
+              {
+                ...chartExample2.data.datasets[0],
+                data: data.counts || data
+              }
+            ]
+          });
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour des données:", err);
+        }
+      };
+      
+      fetchSessionsData();
+    });
+  
 
   if (window.Chart) {
     parseOptions(Chart, chartOptions());
@@ -113,7 +160,7 @@ const Index = (props) => {
               <CardBody>
                 <div className="chart">
                   <Bar
-                    data={chartExample2.data}
+                    data={sessionsData}
                     options={chartExample2.options}
                   />
                 </div>
