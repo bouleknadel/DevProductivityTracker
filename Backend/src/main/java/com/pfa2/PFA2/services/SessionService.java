@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,8 +29,17 @@ public class SessionService {
     public Session updateSession(Session session, Long id) {
         Session existingSession = sessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Session not found with id: " + id));
-        if(session.getEndTime()!=null)
-        existingSession.setEndTime(session.getEndTime());
+        if(session.getEndTime()!=null) {
+            existingSession.setEndTime(LocalDateTime.now());
+            // Calcul automatique de la durée
+            if(existingSession.getStartTime() != null) {
+                long durationInSeconds = java.time.Duration.between(
+                        existingSession.getStartTime(),
+                        existingSession.getEndTime()
+                ).getSeconds();
+                existingSession.setDuration((int) (durationInSeconds / 60)); // Conversion en minutes
+            }
+        }
         if(session.getDuration()!=null)
         existingSession.setDuration(session.getDuration());
         if(session.getInterruptions()!=null)

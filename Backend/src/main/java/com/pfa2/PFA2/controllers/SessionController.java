@@ -28,6 +28,7 @@ public class SessionController {
     }
     @PutMapping("/{id}")
     public Session updateSession(@RequestBody Session session,@PathVariable Long id) {
+        SessionUpdatesHandler.notifyClients();
         return sessionService.updateSession(session,id);
     }
     @DeleteMapping("/{id}")

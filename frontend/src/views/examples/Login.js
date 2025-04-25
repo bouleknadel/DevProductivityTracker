@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   Button,
   Card,
@@ -14,22 +14,47 @@ import {
   Col,
 } from 'reactstrap';
 import { login }  from '../../services/AuthService';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams  } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isVSCodeCallback, setIsVSCodeCallback] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const callbackUrl = searchParams.get('callback');
+  useEffect(() => {
+    // Vérifier si on a un paramètre callback dans l'URL (venant de VS Code)
+    const callbackUrl = searchParams.get('callback');
+    if (callbackUrl) {
+      setIsVSCodeCallback(true);
+    }
+  }, [searchParams]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
       const data = await login(email, password);
       localStorage.setItem('access_token', data.access_token);
-      navigate('/admin');
+      const callbackUrl = searchParams.get('callback');
+      if (callbackUrl) {
+        // Redirection pour VS Code
+        window.location.href = `${callbackUrl}?token=${encodeURIComponent(JSON.stringify(data))}`;
+      } else {
+        // Redirection normale
+        navigate('/admin');
+      }
     } catch (error) {
-      setErrorMessage('Identifiants invalides. Veuillez réessayer.');
+      const callbackUrl = searchParams.get('callback');
+      const errorMsg = error.response?.data?.message || 'Identifiants invalides. Veuillez réessayer.';
+      
+      setErrorMessage(errorMsg);
+      
+      if (callbackUrl) {
+        // Si c'est une requête depuis VS Code, on peut aussi rediriger avec l'erreur
+        window.location.href = `${callbackUrl}?error=${encodeURIComponent(errorMsg)}`;
+      }
     }
   };
 

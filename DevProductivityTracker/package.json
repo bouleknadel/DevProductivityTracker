@@ -1,0 +1,122 @@
+{
+  "name": "devproductivitytracker",
+  "displayName": "Dev Productivity Tracker",
+  "description": "Track developer productivity metrics and view selected code",
+  "publisher": "mandourilyass",
+  "version": "0.0.2",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:devproductivitytracker.countLines",
+    "onCommand:devproductivitytracker.showSelectedCode",
+    "onUri:vscode://mandourilyass.devtproductivitytracker*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "devproductivitytracker.countLines",
+        "title": "Count Lines of Code",
+        "category": "Dev Productivity"
+      },
+      {
+        "command": "devproductivitytracker.showSelectedCode",
+        "title": "Show Selected Code",
+        "category": "Dev Productivity"
+      },
+      {
+        "command": "devproductivitytracker.login",
+        "title": "Login",
+        "category": "Dev Productivity"
+      },
+      {
+        "command": "devproductivitytracker.logout",
+        "title": "Logout",
+        "category": "Dev Productivity"
+      },
+      {
+        "command": "devproductivitytracker.countErrors",
+        "title": "eroors",
+        "category": "Dev Productivity"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "devproductivitytracker.showSelectedCode",
+          "group": "navigation",
+          "when": "editorHasSelection"
+        },
+        {
+          "submenu": "devproductivitytracker.menu",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "devproductivitytracker.showSelectedCode",
+          "group": "navigation",
+          "when": "editorHasSelection"
+        }
+      ],
+      "devproductivitytracker.menu": [
+        {
+          "command": "devproductivitytracker.countLines",
+          "group": "1_analysis"
+        },
+        {
+          "command": "devproductivitytracker.showSelectedCode",
+          "group": "1_analysis"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "devproductivitytracker.menu",
+        "label": "Dev Productivity",
+        "icon": "$(dashboard)"
+      }
+    ],
+    "capabilities": {
+      "virtualWorkspaces": false,
+      "untrustedWorkspaces": {
+        "supported": true
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2"
+  },
+  "icon": "images/icon.png",
+  "keywords": [
+    "productivity",
+    "code",
+    "tracker",
+    "metrics"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@types/node-fetch": "^2.6.12",
+    "node-fetch": "^3.3.2",
+    "sync-request": "^6.1.0"
+  }
+}

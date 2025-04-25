@@ -38,6 +38,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/correctCode").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll() // Permettre uniquement POST pour /user
                         .requestMatchers(HttpMethod.PUT, "/userupdate").permitAll()
                         .requestMatchers("/ws/**").permitAll()
