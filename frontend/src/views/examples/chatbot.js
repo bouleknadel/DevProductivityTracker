@@ -15,56 +15,97 @@ import {
   Media,
   UncontrolledTooltip,
 } from 'reactstrap';
-
-// Mock data for starter messages - in a real app, you would get this from an API
-const initialMessages = [
-  {
-    id: 1,
-    sender: 'bot',
-    content:
-      "Bonjour ! Je suis votre assistant DevProductivityTracker. Comment puis-je vous aider aujourd'hui ?",
-    timestamp: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    sender: 'bot',
-    content:
-      "Je peux vous aider avec des analyses de vos sessions de codage, des conseils pour améliorer votre productivité, ou répondre à vos questions sur l'application.",
-    timestamp: new Date().toISOString(),
-  },
-];
-
-// Sample predefined responses
-const botResponses = [
-  {
-    keywords: ['productivité', 'améliorer', 'efficacité'],
-    response:
-      "Pour améliorer votre productivité, essayez la technique Pomodoro : 25 minutes de concentration suivies de 5 minutes de pause. Nos données montrent que les développeurs qui pratiquent cette méthode ont 30% moins d'interruptions.",
-  },
-  {
-    keywords: ['interruption', 'distraction'],
-    response:
-      "Selon nos analyses, les interruptions les plus fréquentes sont les notifications d'email (35%), les réunions imprévues (28%) et les messages instantanés (22%). Essayez de définir des plages horaires sans interruption.",
-  },
-  {
-    keywords: ['erreur', 'bug', 'problème'],
-    response:
-      "Les erreurs font partie du processus ! Nos données indiquent que les sessions avec 15-20% de temps consacré au débogage sont souvent les plus productives. Au-delà, envisagez de demander de l'aide.",
-  },
-  {
-    keywords: ['session', 'durée', 'temps'],
-    response:
-      "La durée optimale d'une session de code est généralement de 90-120 minutes. Vos sessions les plus productives (lignes de code/erreurs) sont en moyenne de 105 minutes.",
-  },
-  {
-    keywords: ['rapport', 'statistique', 'données'],
-    response:
-      "Vous pouvez consulter vos statistiques complètes dans le tableau de bord. Votre temps de codage cette semaine est supérieur de 15% à votre moyenne habituelle, avec 23% moins d'interruptions !",
-  },
-];
+import { getResponseFromChat } from '../../services/ChatBoot'
 
 const ChatBot = () => {
-  const [messages, setMessages] = useState(initialMessages);
+  const formatMessageContent = (content) => {
+    // Détection des blocs de code (entre ```)
+    const parts = content.split(/```(\w*)\n([\s\S]*?)```/g);
+    
+    return parts.map((part, index) => {
+      // Si c'est un bloc de code (index impair)
+      if (index % 3 === 2) {
+        const language = parts[index - 1] || '';
+        const code = part;
+        
+        return (
+          <div key={index} style={{
+            backgroundColor: '#282c34',
+            borderRadius: '8px',
+            padding: '16px',
+            margin: '12px 0',
+            overflowX: 'auto',
+            position: 'relative'
+          }}>
+            {language && (
+              <div style={{
+                position: 'absolute',
+                top: '8px',
+                right: '12px',
+                color: '#abb2bf',
+                fontSize: '0.8em',
+                fontFamily: 'monospace'
+              }}>
+                {language}
+              </div>
+            )}
+            <pre style={{
+              margin: '0',
+              color: '#abb2bf',
+              fontFamily: 'Consolas, Monaco, "Andale Mono", monospace',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              tabSize: '4',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word'
+            }}>
+              <code>{code}</code>
+            </pre>
+          </div>
+        );
+      }
+      
+      // Si c'est le nom du langage (on ignore car déjà traité)
+      if (index % 3 === 1) {
+        return null;
+      }
+      
+      // Texte normal avec gestion des sauts de ligne et du gras
+      return (
+        <div key={index}>
+          {part.split('\n').map((paragraph, pIndex) => {
+            if (paragraph.trim() === '') return <br key={pIndex} />;
+            
+            // Gestion du texte en gras (**texte**)
+            const boldParts = paragraph.split(/\*\*(.*?)\*\*/g);
+            const processedParagraph = boldParts.map((boldPart, bIndex) => {
+              if (bIndex % 2 === 1) {
+                return <strong key={bIndex}>{boldPart}</strong>;
+              }
+              return boldPart;
+            });
+            
+            return (
+              <p key={pIndex} style={{ 
+                marginBottom: '0.5rem',
+                lineHeight: '1.6'
+              }}>
+                {processedParagraph}
+              </p>
+            );
+          })}
+        </div>
+      );
+    });
+  };
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      sender: 'bot',
+      content: "Bonjour ! Je suis votre assistant DevProductivityTracker. Comment puis-je vous aider aujourd'hui ?",
+      timestamp: new Date().toISOString(),
+    },
+  ]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [suggestions, setSuggestions] = useState([
@@ -85,7 +126,7 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === '') return;
 
@@ -101,11 +142,10 @@ const ChatBot = () => {
     setNewMessage('');
     setIsTyping(true);
 
-    // Simulate bot thinking
-    setTimeout(() => {
-      // Generate bot response
-      const botResponse = generateBotResponse(newMessage);
-
+    try {
+      // Appel à l'API avec la question de l'utilisateur
+      const botResponse = await getResponseFromChat(newMessage);
+      
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -115,32 +155,21 @@ const ChatBot = () => {
           timestamp: new Date().toISOString(),
         },
       ]);
-
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la réponse", error);
+      
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: prevMessages.length + 1,
+          sender: 'bot',
+          content: "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
-  };
-
-  const generateBotResponse = (query) => {
-    // Check for matches with predefined responses
-    const lowercaseQuery = query.toLowerCase();
-    for (const item of botResponses) {
-      if (item.keywords.some((keyword) => lowercaseQuery.includes(keyword))) {
-        return item.response;
-      }
     }
-
-    // Default responses if no keyword matches
-    const defaultResponses = [
-      "Intéressant ! Basé sur vos données de codage, je peux vous suggérer d'essayer des sessions plus courtes mais plus concentrées.",
-      "D'après votre historique, vous êtes plus productif le matin entre 9h et 11h. Avez-vous envisagé de planifier vos tâches complexes pendant cette période ?",
-      "Je remarque que vos sessions avec le moins d'erreurs correspondent à celles où vous avez moins d'interruptions. Voulez-vous des conseils pour réduire les distractions ?",
-      "Je n'ai pas assez d'informations pour répondre précisément. Pouvez-vous me donner plus de détails sur votre question ?",
-      "Cette semaine, vous avez écrit 32% plus de code que la semaine dernière, tout en maintenant un taux d'erreur similaire. Excellent travail !",
-    ];
-
-    return defaultResponses[
-      Math.floor(Math.random() * defaultResponses.length)
-    ];
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -213,7 +242,7 @@ const ChatBot = () => {
                                   lineHeight: '30px',
                                 }}
                               >
-                                YOU
+                                VOUS
                               </span>
                             </div>
                           )}
@@ -230,9 +259,10 @@ const ChatBot = () => {
                               maxWidth: '75%',
                               display: 'inline-block',
                               textAlign: 'left',
+                              whiteSpace: 'pre-wrap'
                             }}
                           >
-                            {msg.content}
+                            {formatMessageContent(msg.content)}
                           </div>
                           <div
                             className={`text-xs text-muted ${
@@ -307,15 +337,12 @@ const ChatBot = () => {
             </Card>
           </Col>
           <Col xl="4">
-            <Card className="shadow" style={{ height: 'calc(100vh - 50 px)' }}>
+            <Card className="shadow" style={{ height: 'calc(100vh - 100px)' }}>
               <CardHeader className="bg-transparent">
                 <h3 className="mb-0">Insights & Conseils</h3>
               </CardHeader>
               <CardBody>
-                <div
-                  className="timeline timeline-one-side"
-                  data-timeline-content="axis"
-                >
+                <div className="timeline timeline-one-side">
                   <div className="timeline-block">
                     <span className="timeline-step badge-success">
                       <i className="ni ni-bell-55"></i>

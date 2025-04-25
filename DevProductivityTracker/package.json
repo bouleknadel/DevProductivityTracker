@@ -11,21 +11,16 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:devproductivitytracker.countLines",
     "onCommand:devproductivitytracker.showSelectedCode",
     "onUri:vscode://mandourilyass.devtproductivitytracker*"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "devproductivitytracker.countLines",
-        "title": "Count Lines of Code",
-        "category": "Dev Productivity"
-      },
+
       {
         "command": "devproductivitytracker.showSelectedCode",
-        "title": "Show Selected Code",
+        "title": "Correction d'erreurs",
         "category": "Dev Productivity"
       },
       {
@@ -65,10 +60,6 @@
         }
       ],
       "devproductivitytracker.menu": [
-        {
-          "command": "devproductivitytracker.countLines",
-          "group": "1_analysis"
-        },
         {
           "command": "devproductivitytracker.showSelectedCode",
           "group": "1_analysis"

@@ -51,7 +51,9 @@ public class SessionService {
         return sessionRepository.save(existingSession);
     }
 
-    public List<Session> getAllSessions() {return sessionRepository.findAll();}
+    public List<Session> getAllSessions(Principal principal) {
+        AppUser user=accountService.loadUserByUsername(principal.getName());
+        return sessionRepository.findByUser(user);}
     public void deleteSession(Long sessionId) {
         sessionRepository.deleteById(sessionId);
     }

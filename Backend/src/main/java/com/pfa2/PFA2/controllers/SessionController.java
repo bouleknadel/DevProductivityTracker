@@ -20,8 +20,8 @@ public class SessionController {
         return sessionService.createSession(session,principal);
     }
     @GetMapping
-    public List<Session> getAllSessions() {
-        return sessionService.getAllSessions();}
+    public List<Session> getAllSessions(Principal principal) {
+        return sessionService.getAllSessions(principal);}
     @GetMapping("/{id}")
     public Session getSessionById(@PathVariable Long id) {
         return sessionService.getSession(id);

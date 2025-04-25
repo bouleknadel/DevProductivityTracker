@@ -279,17 +279,6 @@ function activate(context) {
             }, 300000);
         });
     }
-    // Commande pour compter les lignes
-    let countLinesCmd = vscode.commands.registerCommand('devproductivitytracker.countLines', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('No active editor!');
-            return;
-        }
-        const lineCount = editor.document.lineCount;
-        vscode.window.showInformationMessage(`Lines of code: ${lineCount}`);
-        await updateCurrentSession(context, { interruptions: 41 });
-    });
     let showSelectedCodeCmd = vscode.commands.registerCommand('devproductivitytracker.showSelectedCode', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -335,7 +324,6 @@ function activate(context) {
             }
         });
     });
-    // Fonction pour générer le contenu Webview
     function getWebviewContent(originalCode, correctedCode) {
         return `
             <!DOCTYPE html>
@@ -370,39 +358,45 @@ function activate(context) {
                     button:hover {
                         background-color: var(--vscode-button-hoverBackground);
                     }
+                    .hidden-code {
+                        display: none;
+                    }
                 </style>
                 <script>
                     const vscode = acquireVsCodeApi();
                     
                     function replaceCode() {
+                        const rawCode = document.getElementById('rawCorrectedCode').textContent;
                         vscode.postMessage({
                             command: 'replaceCode',
-                            correctedCode: \`${escapeHtml(correctedCode)}\`
+                            correctedCode: rawCode
                         });
                     }
                 </script>
             </head>
             <body>
                 <div class="container">
-                    <h3>Selected Code:</h3>
+                    <h3>Code Sélectionné :</h3>
                     <pre>${escapeHtml(originalCode)}</pre>
-                    <p>Length: ${originalCode.length} characters</p>
+                    <p>Longueur : ${originalCode.length} caractères</p>
                     
                     <div class="api-response">
-                        <h3>API Response:</h3>
+                        <h3>Réponse de l'API :</h3>
                         <pre>${escapeHtml(correctedCode)}</pre>
-                        <button onclick="replaceCode()">Replace with Corrected Code</button>
+                        <button onclick="replaceCode()">Remplacer par le Code Corrigé</button>
+                        <!-- Stockage du code original non échappé -->
+                        <pre id="rawCorrectedCode" class="hidden-code">${correctedCode}</pre>
                     </div>
                 </div>
             </body>
             </html>
         `;
     }
-    // Fonction d'échappement HTML
+    // Fonction d'échappement HTML (inchangée)
     function escapeHtml(unsafe) {
         return unsafe
             .replace(/&/g, "&amp;")
-            .replace(/<\//g, "&lt;")
+            .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;")
