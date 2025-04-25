@@ -21,6 +21,7 @@ import Maps from 'views/examples/Maps.js';
 import Register from 'views/examples/Register.js';
 import Login from 'views/examples/Login.js';
 import Tables from 'views/examples/Tables.js';
+import ChatBot from 'views/examples/chatbot.js';
 import Icons from 'views/examples/Icons.js';
 import Logout from 'views/examples/Logout.js'; // Import du composant Logout (à créer)
 
@@ -61,19 +62,26 @@ var routes = [
     layout: '/admin',
   },
   {
-    path: '/login',
-    name: 'Connexion',
-    icon: 'ni ni-key-25 text-info',
-    component: <Login />,
-    layout: '/auth',
+    path: '/chatbot',
+    name: 'Assistant IA',
+    icon: 'ni ni-chat-round text-info',
+    component: <ChatBot />,
+    layout: '/admin',
   },
-  {
-    path: '/register',
-    name: 'Inscription',
-    icon: 'ni ni-circle-08 text-pink',
-    component: <Register />,
-    layout: '/auth',
-  },
+  // {
+  //   path: '/login',
+  //   name: 'Connexion',
+  //   icon: 'ni ni-key-25 text-info',
+  //   component: <Login />,
+  //   layout: '/auth',
+  // },
+  // {
+  //   path: '/register',
+  //   name: 'Inscription',
+  //   icon: 'ni ni-circle-08 text-pink',
+  //   component: <Register />,
+  //   layout: '/auth',
+  // },
   {
     path: '/logout',
     name: 'Déconnexion',

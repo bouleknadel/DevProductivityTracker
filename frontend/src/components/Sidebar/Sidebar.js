@@ -116,15 +116,15 @@ const Sidebar = (props) => {
           <span className="navbar-toggler-icon" />
         </button>
         {/* Brand */}
-        {logo ? (
-          <NavbarBrand className="pt-0" {...navbarBrandProps}>
-            <img
-              alt={logo.imgAlt}
-              className="navbar-brand-img"
-              src={logo.imgSrc}
-            />
-          </NavbarBrand>
-        ) : null}
+        <NavbarBrand className="pt-0" to="/" tag={Link}>
+          <img
+            alt="Mon logo"
+            className="navbar-brand-img"
+            src={require('../../assets/img/brand/logosite.png')}
+            style={{ height: '80px', width: 'auto' }} // tu peux adapter ici
+          />
+        </NavbarBrand>
+
         {/* User */}
         <Nav className="align-items-center d-md-none">
           <UncontrolledDropdown nav>
@@ -148,7 +148,7 @@ const Sidebar = (props) => {
                 <span className="avatar avatar-sm rounded-circle">
                   <img
                     alt="..."
-                    src={require("../../assets/img/theme/team-1-800x800.jpg")}
+                    src={require('../../assets/img/theme/team-1-800x800.jpg')}
                   />
                 </span>
               </Media>

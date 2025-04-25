@@ -36,10 +36,12 @@ const AdminNavbar = () => {
         <Container className="px-4">
           <NavbarBrand to="/" tag={Link}>
             <img
-              alt="..."
-              src={require('../../assets/img/brand/argon-react-white.png')}
+              alt="logo"
+              src={require('../../assets/img/brand/logosite.png')}
+              style={{ height: '50px', width: 'auto' }}
             />
           </NavbarBrand>
+
           <button className="navbar-toggler" id="navbar-collapse-main">
             <span className="navbar-toggler-icon" />
           </button>
@@ -85,7 +87,7 @@ const AdminNavbar = () => {
                   <span className="nav-link-inner--text">Connexion</span>
                 </NavLink>
               </NavItem>
-              <NavItem>
+              {/* <NavItem>
                 <NavLink
                   className="nav-link-icon"
                   to="/admin/user-profile"
@@ -94,7 +96,7 @@ const AdminNavbar = () => {
                   <i className="ni ni-single-02" />
                   <span className="nav-link-inner--text">Profil</span>
                 </NavLink>
-              </NavItem>
+              </NavItem> */}
             </Nav>
           </UncontrolledCollapse>
         </Container>
