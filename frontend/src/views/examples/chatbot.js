@@ -15,9 +15,23 @@ import {
   Media,
   UncontrolledTooltip,
 } from 'reactstrap';
-import { getResponseFromChat } from '../../services/ChatBoot'
+import { getResponseFromChat,fetchCodingStatistics } from '../../services/ChatBoot'
 
 const ChatBot = () => {
+  const [codingStats, setCodingStats] = useState(null);
+
+useEffect(() => {
+  const loadStats = async () => {
+    const stats = await fetchCodingStatistics();
+    setCodingStats(stats);
+  };
+  
+  loadStats();
+  
+  // Rafraîchir les stats toutes les 5 minutes
+  const interval = setInterval(loadStats, 300000);
+  return () => clearInterval(interval);
+}, []);
   const formatMessageContent = (content) => {
     // Détection des blocs de code (entre ```)
     const parts = content.split(/```(\w*)\n([\s\S]*?)```/g);
@@ -336,104 +350,107 @@ const ChatBot = () => {
               </CardFooter>
             </Card>
           </Col>
-          <Col xl="4">
-            <Card className="shadow" style={{ height: 'calc(100vh - 100px)' }}>
-              <CardHeader className="bg-transparent">
-                <h3 className="mb-0">Insights & Conseils</h3>
-              </CardHeader>
-              <CardBody>
-                <div className="timeline timeline-one-side">
-                  <div className="timeline-block">
-                    <span className="timeline-step badge-success">
-                      <i className="ni ni-bell-55"></i>
-                    </span>
-                    <div className="timeline-content">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <span className="text-muted text-sm">
-                            Aujourd'hui
-                          </span>
-                          <h5 className="mt-1 mb-0">Pic de productivité</h5>
-                        </div>
-                      </div>
-                      <p className="text-sm mt-1 mb-0">
-                        Vos meilleurs moments de productivité sont entre 10h et
-                        12h. Planifiez vos tâches complexes pendant cette
-                        période.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="timeline-block">
-                    <span className="timeline-step badge-warning">
-                      <i className="ni ni-notification-70"></i>
-                    </span>
-                    <div className="timeline-content">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <span className="text-muted text-sm">
-                            Cette semaine
-                          </span>
-                          <h5 className="mt-1 mb-0">
-                            Analyse des interruptions
-                          </h5>
-                        </div>
-                      </div>
-                      <p className="text-sm mt-1 mb-0">
-                        Vous avez eu 37% moins d'interruptions en désactivant
-                        les notifications pendant vos sessions.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="timeline-block">
-                    <span className="timeline-step badge-info">
-                      <i className="ni ni-chart-bar-32"></i>
-                    </span>
-                    <div className="timeline-content">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <span className="text-muted text-sm">Ce mois</span>
-                          <h5 className="mt-1 mb-0">Qualité du code</h5>
-                        </div>
-                      </div>
-                      <p className="text-sm mt-1 mb-0">
-                        Le ratio erreurs/lignes de code a diminué de 18%.
-                        Continuez à utiliser les tests unitaires !
-                      </p>
-                    </div>
-                  </div>
-                  <div className="timeline-block">
-                    <span className="timeline-step badge-danger">
-                      <i className="ni ni-spaceship"></i>
-                    </span>
-                    <div className="timeline-content">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <span className="text-muted text-sm">Objectif</span>
-                          <h5 className="mt-1 mb-0">Progression</h5>
-                        </div>
-                      </div>
-                      <p className="text-sm mt-1 mb-0">
-                        Vous êtes à 75% de votre objectif hebdomadaire de 20
-                        heures de codage productif.
-                      </p>
-                      <div className="mt-3">
-                        <div className="progress">
-                          <div
-                            className="progress-bar bg-danger"
-                            role="progressbar"
-                            style={{ width: '75%' }}
-                            aria-valuenow="75"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Col>
+         
+<Col xl="4">
+  <Card className="shadow" style={{ height: 'calc(100vh - 100px)' }}>
+    <CardHeader className="bg-transparent">
+      <h3 className="mb-0">Insights & Conseils</h3>
+    </CardHeader>
+    <CardBody>
+      <div className="timeline timeline-one-side">
+        <div className="timeline-block">
+          <span className="timeline-step badge-success">
+            <i className="ni ni-bell-55"></i>
+          </span>
+          <div className="timeline-content">
+            <div className="d-flex justify-content-between">
+              <div>
+                <span className="text-muted text-sm">
+                  Aujourd'hui
+                </span>
+                <h5 className="mt-1 mb-0">Temps de codage</h5>
+              </div>
+            </div>
+            <p className="text-sm mt-1 mb-0">
+              Vous avez codé pendant <strong>{codingStats?.codingTime || '0h 00min'}</strong> aujourd'hui.
+              <br />
+              {codingStats?.codingTimeTrend || '→ Stable'}
+            </p>
+          </div>
+        </div>
+        
+        <div className="timeline-block">
+          <span className="timeline-step badge-warning">
+            <i className="ni ni-notification-70"></i>
+          </span>
+          <div className="timeline-content">
+            <div className="d-flex justify-content-between">
+              <div>
+                <span className="text-muted text-sm">
+                  Aujourd'hui
+                </span>
+                <h5 className="mt-1 mb-0">Interruptions</h5>
+              </div>
+            </div>
+            <p className="text-sm mt-1 mb-0">
+              Vous avez eu <strong>{codingStats?.interruptions || 0}</strong> interruptions.
+              <br />
+              {codingStats?.interruptionsTrend || '→ Stable'}
+            </p>
+          </div>
+        </div>
+        
+        <div className="timeline-block">
+          <span className="timeline-step badge-info">
+            <i className="ni ni-chart-bar-32"></i>
+          </span>
+          <div className="timeline-content">
+            <div className="d-flex justify-content-between">
+              <div>
+                <span className="text-muted text-sm">Aujourd'hui</span>
+                <h5 className="mt-1 mb-0">Productivité</h5>
+              </div>
+            </div>
+            <p className="text-sm mt-1 mb-0">
+              Votre score de productivité est de <strong>{codingStats?.productivityPercentage || 0}%</strong>.
+              <br />
+              {codingStats?.productivityTrend || '→ Stable'}
+            </p>
+          </div>
+        </div>
+        
+        <div className="timeline-block">
+          <span className="timeline-step badge-danger">
+            <i className="ni ni-spaceship"></i>
+          </span>
+          <div className="timeline-content">
+            <div className="d-flex justify-content-between">
+              <div>
+                <span className="text-muted text-sm">Objectif</span>
+                <h5 className="mt-1 mb-0">Progression</h5>
+              </div>
+            </div>
+            <p className="text-sm mt-1 mb-0">
+              {codingStats?.goalMessage || 'Chargement...'}
+            </p>
+            <div className="mt-3">
+              <div className="progress">
+                <div
+                  className={`progress-bar ${codingStats?.dailyGoalAchieved ? 'bg-success' : 'bg-danger'}`}
+                  role="progressbar"
+                  style={{ width: `${Math.min(100, (codingStats?.productivityPercentage || 0))}%` }}
+                  aria-valuenow={codingStats?.productivityPercentage || 0}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </CardBody>
+  </Card>
+</Col>
         </Row>
       </Container>
 

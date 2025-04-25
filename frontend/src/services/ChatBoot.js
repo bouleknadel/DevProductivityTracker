@@ -12,3 +12,12 @@ export const getResponseFromChat = async (question) => {
       throw error;
     }
 };
+export const fetchCodingStatistics = async () => {
+  try {
+    const response = await axiosInstance.get("/api/statistics/coding");
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des stats:", error);
+    throw error;
+  }
+};
