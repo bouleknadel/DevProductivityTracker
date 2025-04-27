@@ -261,6 +261,7 @@ useEffect(() => {
                             </div>
                           )}
                         </div>
+                       
                         <Media body>
                           <div
                             className={`message-bubble p-3 mb-1 ${
@@ -270,10 +271,13 @@ useEffect(() => {
                             }`}
                             style={{
                               borderRadius: '18px',
-                              maxWidth: '75%',
+                              // Augmentez la taille maximale pour les messages
+                            //   maxWidth: '90%', // Changez de 75% à 90%
+                              width: 'auto', // Ajoutez cette ligne pour une largeur adaptative
                               display: 'inline-block',
                               textAlign: 'left',
-                              whiteSpace: 'pre-wrap'
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word', // Ajoutez cette ligne pour éviter le débordement du texte
                             }}
                           >
                             {formatMessageContent(msg.content)}
@@ -350,107 +354,128 @@ useEffect(() => {
               </CardFooter>
             </Card>
           </Col>
-         
-<Col xl="4">
-  <Card className="shadow" style={{ height: 'calc(100vh - 100px)' }}>
-    <CardHeader className="bg-transparent">
-      <h3 className="mb-0">Insights & Conseils</h3>
-    </CardHeader>
-    <CardBody>
-      <div className="timeline timeline-one-side">
-        <div className="timeline-block">
-          <span className="timeline-step badge-success">
-            <i className="ni ni-bell-55"></i>
-          </span>
-          <div className="timeline-content">
-            <div className="d-flex justify-content-between">
-              <div>
-                <span className="text-muted text-sm">
-                  Aujourd'hui
-                </span>
-                <h5 className="mt-1 mb-0">Temps de codage</h5>
-              </div>
-            </div>
-            <p className="text-sm mt-1 mb-0">
-              Vous avez codé pendant <strong>{codingStats?.codingTime || '0h 00min'}</strong> aujourd'hui.
-              <br />
-              {codingStats?.codingTimeTrend || '→ Stable'}
-            </p>
-          </div>
-        </div>
-        
-        <div className="timeline-block">
-          <span className="timeline-step badge-warning">
-            <i className="ni ni-notification-70"></i>
-          </span>
-          <div className="timeline-content">
-            <div className="d-flex justify-content-between">
-              <div>
-                <span className="text-muted text-sm">
-                  Aujourd'hui
-                </span>
-                <h5 className="mt-1 mb-0">Interruptions</h5>
-              </div>
-            </div>
-            <p className="text-sm mt-1 mb-0">
-              Vous avez eu <strong>{codingStats?.interruptions || 0}</strong> interruptions.
-              <br />
-              {codingStats?.interruptionsTrend || '→ Stable'}
-            </p>
-          </div>
-        </div>
-        
-        <div className="timeline-block">
-          <span className="timeline-step badge-info">
-            <i className="ni ni-chart-bar-32"></i>
-          </span>
-          <div className="timeline-content">
-            <div className="d-flex justify-content-between">
-              <div>
-                <span className="text-muted text-sm">Aujourd'hui</span>
-                <h5 className="mt-1 mb-0">Productivité</h5>
-              </div>
-            </div>
-            <p className="text-sm mt-1 mb-0">
-              Votre score de productivité est de <strong>{codingStats?.productivityPercentage || 0}%</strong>.
-              <br />
-              {codingStats?.productivityTrend || '→ Stable'}
-            </p>
-          </div>
-        </div>
-        
-        <div className="timeline-block">
-          <span className="timeline-step badge-danger">
-            <i className="ni ni-spaceship"></i>
-          </span>
-          <div className="timeline-content">
-            <div className="d-flex justify-content-between">
-              <div>
-                <span className="text-muted text-sm">Objectif</span>
-                <h5 className="mt-1 mb-0">Progression</h5>
-              </div>
-            </div>
-            <p className="text-sm mt-1 mb-0">
-              {codingStats?.goalMessage || 'Chargement...'}
-            </p>
-            <div className="mt-3">
-              <div className="progress">
-                <div
-                  className={`progress-bar ${codingStats?.dailyGoalAchieved ? 'bg-success' : 'bg-danger'}`}
-                  role="progressbar"
-                  style={{ width: `${Math.min(100, (codingStats?.productivityPercentage || 0))}%` }}
-                  aria-valuenow={codingStats?.productivityPercentage || 0}
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </CardBody>
-  </Card>
-</Col>
+
+          <Col xl="4">
+            <Card className="shadow" style={{ height: '' }}>
+              <CardHeader className="bg-transparent">
+                <h3 className="mb-0">Insights & Conseils</h3>
+              </CardHeader>
+              <CardBody>
+                <div className="timeline timeline-one-side">
+                  <div className="timeline-block">
+                    <span className="timeline-step badge-success">
+                      <i className="ni ni-bell-55"></i>
+                    </span>
+                    <div className="timeline-content">
+                      <div className="d-flex justify-content-between">
+                        <div>
+                          <span className="text-muted text-sm">
+                            Aujourd'hui
+                          </span>
+                          <h5 className="mt-1 mb-0">Temps de codage</h5>
+                        </div>
+                      </div>
+                      <p className="text-sm mt-1 mb-0">
+                        Vous avez codé pendant{' '}
+                        <strong>{codingStats?.codingTime || '0h 00min'}</strong>{' '}
+                        aujourd'hui.
+                        <br />
+                        {codingStats?.codingTimeTrend || '→ Stable'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="timeline-block">
+                    <span className="timeline-step badge-warning">
+                      <i className="ni ni-notification-70"></i>
+                    </span>
+                    <div className="timeline-content">
+                      <div className="d-flex justify-content-between">
+                        <div>
+                          <span className="text-muted text-sm">
+                            Aujourd'hui
+                          </span>
+                          <h5 className="mt-1 mb-0">Interruptions</h5>
+                        </div>
+                      </div>
+                      <p className="text-sm mt-1 mb-0">
+                        Vous avez eu{' '}
+                        <strong>{codingStats?.interruptions || 0}</strong>{' '}
+                        interruptions.
+                        <br />
+                        {codingStats?.interruptionsTrend || '→ Stable'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="timeline-block">
+                    <span className="timeline-step badge-info">
+                      <i className="ni ni-chart-bar-32"></i>
+                    </span>
+                    <div className="timeline-content">
+                      <div className="d-flex justify-content-between">
+                        <div>
+                          <span className="text-muted text-sm">
+                            Aujourd'hui
+                          </span>
+                          <h5 className="mt-1 mb-0">Productivité</h5>
+                        </div>
+                      </div>
+                      <p className="text-sm mt-1 mb-0">
+                        Votre score de productivité est de{' '}
+                        <strong>
+                          {codingStats?.productivityPercentage || 0}%
+                        </strong>
+                        .
+                        <br />
+                        {codingStats?.productivityTrend || '→ Stable'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="timeline-block">
+                    <span className="timeline-step badge-danger">
+                      <i className="ni ni-spaceship"></i>
+                    </span>
+                    <div className="timeline-content">
+                      <div className="d-flex justify-content-between">
+                        <div>
+                          <span className="text-muted text-sm">Objectif</span>
+                          <h5 className="mt-1 mb-0">Progression</h5>
+                        </div>
+                      </div>
+                      <p className="text-sm mt-1 mb-0">
+                        {codingStats?.goalMessage || 'Chargement...'}
+                      </p>
+                      <div className="mt-3">
+                        <div className="progress">
+                          <div
+                            className={`progress-bar ${
+                              codingStats?.dailyGoalAchieved
+                                ? 'bg-success'
+                                : 'bg-danger'
+                            }`}
+                            role="progressbar"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                codingStats?.productivityPercentage || 0
+                              )}%`,
+                            }}
+                            aria-valuenow={
+                              codingStats?.productivityPercentage || 0
+                            }
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </Col>
         </Row>
       </Container>
 

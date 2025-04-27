@@ -58,7 +58,7 @@ const Sidebar = (props) => {
   const [collapseOpen, setCollapseOpen] = useState();
   // verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
-    return props.location.pathname.indexOf(routeName) > -1 ? "active" : "";
+    return props.location.pathname.indexOf(routeName) > -1 ? 'active' : '';
   };
   // toggles collapse between opened and closed (true/false)
   const toggleCollapse = () => {
@@ -68,9 +68,14 @@ const Sidebar = (props) => {
   const closeCollapse = () => {
     setCollapseOpen(false);
   };
-  // creates the links that appear in the left menu / Sidebar
+  // modifiez la fonction createLinks pour filtrer les routes
   const createLinks = (routes) => {
-    return routes.map((prop, key) => {
+    // Filtrer pour exclure les routes de login et register
+    const filteredRoutes = routes.filter(
+      (route) => route.path !== '/login' && route.path !== '/register'
+    );
+
+    return filteredRoutes.map((prop, key) => {
       return (
         <NavItem key={key}>
           <NavLink
@@ -96,7 +101,7 @@ const Sidebar = (props) => {
   } else if (logo && logo.outterLink) {
     navbarBrandProps = {
       href: logo.outterLink,
-      target: "_blank",
+      target: '_blank',
     };
   }
 
