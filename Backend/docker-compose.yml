@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: pfa2-backend
+    ports:
+      - "8083:8083"
+    environment:
+      # Database configuration
+      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/productivity.db
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.sqlite.JDBC
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.community.dialect.SQLiteDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+      # Spring AI configuration
+      - SPRING_AI_OPENAI_CHAT_BASE_URL=https://generativelanguage.googleapis.com
+      - SPRING_AI_OPENAI_CHAT_COMPLETIONS_PATH=/v1beta/openai/chat/completions
+      - SPRING_AI_OPENAI_API_KEY=AIzaSyAtrkjbXi4YIQnBTFwsgoX0YEqxX1v26Nk
+      - SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL=gemini-2.0-flash
+
+      # Application configuration
+      - SERVER_PORT=8083
+      - SPRING_APPLICATION_NAME=PFA2
+    volumes:
+      - sqlite-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlite-data:
+    name: pfa2-sqlite-data

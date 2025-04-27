@@ -104,4 +104,59 @@ public class ChatController {
 
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/generate-code")
+    public ResponseEntity<Map<String, String>> generateCode(
+            @RequestBody Map<String, String> request,
+            Principal principal) {
+
+        String userPrompt = request.get("prompt");
+        String programmingLanguage = request.getOrDefault("language", "Java");
+        String framework = request.getOrDefault("framework", "");
+        String complexity = request.getOrDefault("complexity", "medium");
+        String fileContext = request.getOrDefault("fileContext", "");
+        String modificationType = request.getOrDefault("modificationType", "add"); // Nouveau: add, replace, modify
+
+        // Message système plus sophistiqué
+        String systemMessage = "Tu es un assistant de génération de code. " +
+                "Règles strictes:\n" +
+                "1. Analyse le contexte existant avant de générer du code\n" +
+                ". Analyse le contexte existant avant de générer du code\n" +
+                "2. Si l'utilisateur demande une nouvelle fonctionnalité, ajoute-la au code existant\n" +
+                "3. Si l'utilisateur demande de modifier une fonction existante, remplace-la\n" +
+                "4. Si l'utilisateur demande une alternative, propose les deux versions\n" +
+                "5. Conserve les imports et la structure globale\n" +
+                "6. Formatte le code pour correspondre au style existant"+
+                "7. donner le code seulment a ajouter et pas toute le code\n";
+
+        String fullPrompt = "Contexte actuel:\n" + fileContext + "\n\n" +
+                "Demande utilisateur:\n" + userPrompt + "\n\n" +
+                "Type de modification demandée: " + modificationType + "\n" +
+                "Langage: " + programmingLanguage +
+                (framework.isEmpty() ? "" : "\nFramework: " + framework);
+
+        // Appel à l'IA
+        String generatedCode = chatClient.prompt()
+                .system(systemMessage)
+                .user(fullPrompt)
+                .call()
+                .content();
+
+        // Nettoyer la réponse
+        generatedCode = cleanGeneratedCode(generatedCode);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("generatedCode", generatedCode);
+        return ResponseEntity.ok(response);
+    }
+    private String cleanGeneratedCode(String code) {
+        // Supprimer les blocs de code markdown si présents
+        code = code.replaceAll("```[a-zA-Z]*", "");
+        code = code.replaceAll("```", "");
+
+        // Supprimer les mentions "Voici le code..." etc.
+        code = code.replaceAll("(?i)here('s| is) .* code( you asked for)?:", "");
+        code = code.replaceAll("(?i)generated code:", "");
+
+        return code.trim();
+    }
 }

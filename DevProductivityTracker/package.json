@@ -12,15 +12,20 @@
   ],
   "activationEvents": [
     "onCommand:devproductivitytracker.showSelectedCode",
+    "onCommand:devproductivitytracker.generateCode",
     "onUri:vscode://mandourilyass.devtproductivitytracker*"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-
+      {
+        "command": "devproductivitytracker.generateCode",
+        "title": "Generate Code with AI",
+        "category": "Dev Productivity"
+      },
       {
         "command": "devproductivitytracker.showSelectedCode",
-        "title": "Correction d'erreurs",
+        "title": "Solve Your Coding Errors",
         "category": "Dev Productivity"
       },
       {
@@ -35,12 +40,17 @@
       },
       {
         "command": "devproductivitytracker.countErrors",
-        "title": "eroors",
+        "title": "Count Errors",
         "category": "Dev Productivity"
       }
     ],
     "menus": {
       "editor/context": [
+        {
+          "command": "devproductivitytracker.generateCode",
+          "group": "navigation",
+          "when": "editorHasSelection"
+        },
         {
           "command": "devproductivitytracker.showSelectedCode",
           "group": "navigation",
@@ -59,10 +69,24 @@
           "when": "editorHasSelection"
         }
       ],
+      "commandPalette": [
+        {
+          "command": "devproductivitytracker.generateCode",
+          "when": "editorTextFocus"
+        }
+      ],
       "devproductivitytracker.menu": [
         {
           "command": "devproductivitytracker.showSelectedCode",
           "group": "1_analysis"
+        },
+        {
+          "command": "devproductivitytracker.generateCode",
+          "group": "2_generation"
+        },
+        {
+          "command": "devproductivitytracker.countErrors",
+          "group": "3_analysis"
         }
       ]
     },
@@ -70,15 +94,9 @@
       {
         "id": "devproductivitytracker.menu",
         "label": "Dev Productivity",
-        "icon": "$(dashboard)"
+        "icon": "$(sparkle)"
       }
-    ],
-    "capabilities": {
-      "virtualWorkspaces": false,
-      "untrustedWorkspaces": {
-        "supported": true
-      }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -97,17 +115,20 @@
     "eslint": "^9.23.0",
     "typescript": "^5.8.2"
   },
+  "dependencies": {
+    "@types/node-fetch": "^2.6.12",
+    "node-fetch": "^3.3.2",
+    "sync-request": "^6.1.0",
+    "zod": "^3.22.4"
+  },
   "icon": "images/icon.png",
   "keywords": [
     "productivity",
     "code",
     "tracker",
-    "metrics"
+    "metrics",
+    "AI",
+    "code generation"
   ],
-  "license": "MIT",
-  "dependencies": {
-    "@types/node-fetch": "^2.6.12",
-    "node-fetch": "^3.3.2",
-    "sync-request": "^6.1.0"
-  }
+  "license": "MIT"
 }

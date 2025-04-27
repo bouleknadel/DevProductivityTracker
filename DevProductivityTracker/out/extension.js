@@ -410,6 +410,58 @@ function activate(context) {
     statusBarItem.command = 'devproductivitytracker.showSelectedCode';
     statusBarItem.show();
     context.subscriptions.push(showSelectedCodeCmd, statusBarItem);
+    const generateCodeCmd = vscode.commands.registerCommand('devproductivitytracker.generateCode', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor!');
+            return;
+        }
+        try {
+            // Demander la description à l'utilisateur
+            const userPrompt = await vscode.window.showInputBox({
+                prompt: 'Décrivez la fonctionnalité à générer',
+                placeHolder: 'Ex: Une fonction React qui affiche un compteur'
+            });
+            if (!userPrompt)
+                return;
+            // Récupérer le contenu actuel du fichier comme contexte
+            const fileContext = editor.document.getText();
+            // Options supplémentaires
+            const language = editor.document.languageId;
+            const framework = await vscode.window.showQuickPick(['Aucun', 'Spring', 'React', 'Angular', 'Vue', 'Node.js'], { placeHolder: 'Framework (optionnel)' });
+            const complexity = await vscode.window.showQuickPick(['Débutant', 'Intermédiaire', 'Avancé'], { placeHolder: 'Niveau de complexité' });
+            // Appel API avec indicateur de progression
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Génération du code en cours...",
+                cancellable: false
+            }, async (progress) => {
+                const response = await callCodeGenerationAPI(context, {
+                    prompt: userPrompt,
+                    language: language,
+                    framework: framework === 'Aucun' ? undefined : framework,
+                    complexity: complexity?.toLowerCase(),
+                    fileContext: fileContext // Envoyer le contexte du fichier
+                });
+                // Insérer le code à la position actuelle du curseur
+                await editor.edit(editBuilder => {
+                    const position = editor.selection.active;
+                    editBuilder.insert(position, response.generatedCode);
+                });
+                vscode.window.showInformationMessage('Code généré et inséré avec succès!');
+            });
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Échec de la génération: ${error.message}`);
+        }
+    });
+    context.subscriptions.push(generateCodeCmd);
+    const generateCodeButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    generateCodeButton.text = '$(sparkle) Générer Code';
+    generateCodeButton.tooltip = 'Générer du code avec IA';
+    generateCodeButton.command = 'devproductivitytracker.generateCode';
+    generateCodeButton.show();
+    context.subscriptions.push(generateCodeButton);
     // Ajoutez cette nouvelle fonction dans votre extension.ts
     async function sendCodeToAPI(code) {
         try {
@@ -552,6 +604,47 @@ async function updateCurrentSession(context, updates) {
     catch (error) {
         console.error('Échec de la mise à jour:', error);
         vscode.window.showErrorMessage('Échec de la mise à jour de la session');
+    }
+}
+// Vérificateur de type
+function isCodeGenerationResponse(obj) {
+    return obj && typeof obj.generatedCode === 'string';
+}
+async function callCodeGenerationAPI(context, request) {
+    const apiUrl = 'http://localhost:8083/generate-code';
+    const token = context.globalState.get('accessToken');
+    if (!token) {
+        const loginChoice = await vscode.window.showErrorMessage('Connectez-vous pour utiliser cette fonctionnalité', 'Se connecter');
+        if (loginChoice === 'Se connecter') {
+            await vscode.commands.executeCommand('devproductivitytracker.login');
+        }
+        throw new Error('Authentification requise');
+    }
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(request)
+        });
+        if (response.status === 401) {
+            context.globalState.update('accessToken', undefined);
+            throw new Error('Session expirée. Veuillez vous reconnecter.');
+        }
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!isCodeGenerationResponse(data)) {
+            throw new Error('Format de réponse API invalide');
+        }
+        return data;
+    }
+    catch (error) {
+        console.error('Erreur lors de l\'appel API:', error);
+        throw error;
     }
 }
 //# sourceMappingURL=extension.js.map

@@ -13,8 +13,50 @@ import {
   Row,
   Col,
 } from 'reactstrap';
+import { useState } from 'react';
+import axiosInstance from '../../services/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    
+    try {
+      const response = await axiosInstance.post('/user', formData);
+      
+      if (response.data) {
+        setSuccess(true);
+        // Redirection après 2 secondes
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError("Nom d'utilisateur déjà utilisé");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de la création du compte");
+      console.error("Erreur d'inscription:", err);
+    }
+  };
+
   return (
     <>
       <Col lg="6" md="8">
@@ -26,7 +68,17 @@ const Register = () => {
             </div>
           </CardHeader>
           <CardBody className="px-lg-5 py-lg-5">
-            <Form role="form">
+            {success && (
+              <div className="alert alert-success">
+                Compte créé avec succès! Redirection vers la page de connexion...
+              </div>
+            )}
+            {error && (
+              <div className="alert alert-danger">
+                {error}
+              </div>
+            )}
+            <Form role="form" onSubmit={handleSubmit}>
               <FormGroup>
                 <InputGroup className="input-group-alternative mb-3">
                   <InputGroupAddon addonType="prepend">
@@ -34,7 +86,14 @@ const Register = () => {
                       <i className="ni ni-hat-3" />
                     </InputGroupText>
                   </InputGroupAddon>
-                  <Input placeholder="Nom" type="text" />
+                  <Input 
+                    placeholder="Nom d'utilisateur" 
+                    type="text" 
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                  />
                 </InputGroup>
               </FormGroup>
               <FormGroup>
@@ -47,7 +106,11 @@ const Register = () => {
                   <Input
                     placeholder="Email"
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     autoComplete="new-email"
+                    required
                   />
                 </InputGroup>
               </FormGroup>
@@ -61,7 +124,11 @@ const Register = () => {
                   <Input
                     placeholder="Mot de passe"
                     type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
                     autoComplete="new-password"
+                    required
                   />
                 </InputGroup>
               </FormGroup>
@@ -78,6 +145,7 @@ const Register = () => {
                       className="custom-control-input"
                       id="customCheckRegister"
                       type="checkbox"
+                      required
                     />
                     <label
                       className="custom-control-label"
@@ -94,7 +162,7 @@ const Register = () => {
                 </Col>
               </Row>
               <div className="text-center">
-                <Button className="mt-4" color="primary" type="button">
+                <Button className="mt-4" color="primary" type="submit">
                   Créer un compte
                 </Button>
               </div>

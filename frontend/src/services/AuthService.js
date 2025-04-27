@@ -11,3 +11,12 @@ export const login = async (username, password) => {
       throw error;
     }
   };
+export const getPorfil = async () => {
+    try {
+      const response = await axiosInstance.get("/profil");
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la récupération de profil:", error);
+      throw error;
+    }
+  };
