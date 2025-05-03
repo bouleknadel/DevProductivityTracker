@@ -58,6 +58,110 @@ let cumulativeInterruptions = 0; // Ajoutez ceci avec les autres variables globa
 let cumulativeErrors = 0;
 function activate(context) {
     console.log('Extension "devproductivitytracker" is now active!');
+    // Dans la fonction activate()
+    vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+        if (editor && currentSessionActive) {
+            await updateLanguageForSession(context, editor.document.languageId);
+        }
+    });
+    vscode.workspace.onDidOpenTextDocument(async (document) => {
+        if (currentSessionActive && vscode.window.activeTextEditor?.document === document) {
+            await updateLanguageForSession(context, document.languageId);
+        }
+    });
+    // Ajoutez cette fonction pour appeler l'API de génération de tests
+    async function callTestGenerationAPI(context, request) {
+        const apiUrl = 'http://localhost:8083/generate-tests';
+        const token = context.globalState.get('accessToken');
+        if (!token) {
+            const loginChoice = await vscode.window.showErrorMessage('Connectez-vous pour utiliser cette fonctionnalité', 'Se connecter');
+            if (loginChoice === 'Se connecter') {
+                await vscode.commands.executeCommand('devproductivitytracker.login');
+            }
+            throw new Error('Authentification requise');
+        }
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(request)
+            });
+            if (response.status === 401) {
+                context.globalState.update('accessToken', undefined);
+                throw new Error('Session expirée. Veuillez vous reconnecter.');
+            }
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        }
+        catch (error) {
+            console.error('Erreur lors de l\'appel API:', error);
+            throw error;
+        }
+    }
+    // Ajoutez cette commande pour générer les tests
+    let generateTestsCmd = vscode.commands.registerCommand('devproductivitytracker.generateTests', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor!');
+            return;
+        }
+        try {
+            const document = editor.document;
+            const fileContent = document.getText();
+            const language = document.languageId;
+            // Demander le framework de test si pertinent
+            let testFramework = await vscode.window.showQuickPick(['JUnit', 'Jest', 'Mocha', 'Pytest', 'RSpec', 'Autre'], { placeHolder: 'Framework de test (optionnel)' });
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Génération des tests unitaires en cours...",
+                cancellable: false
+            }, async (progress) => {
+                const response = await callTestGenerationAPI(context, {
+                    code: fileContent,
+                    language: language,
+                    testFramework: testFramework === 'Autre' ? undefined : testFramework
+                });
+                // Créer un nouveau fichier pour les tests
+                const testFileName = document.fileName.replace(/(\.[^/.]+)?$/, '.test$1');
+                const uri = vscode.Uri.file(testFileName);
+                try {
+                    // Vérifier si le fichier existe déjà
+                    await vscode.workspace.fs.stat(uri);
+                    const choice = await vscode.window.showQuickPick(['Remplacer', 'Annuler'], { placeHolder: 'Le fichier de test existe déjà. Que souhaitez-vous faire?' });
+                    if (choice !== 'Remplacer') {
+                        return;
+                    }
+                }
+                catch (error) {
+                    // Le fichier n'existe pas, on continue
+                }
+                // Écrire le contenu dans le fichier
+                await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(response.testCode));
+                // Ouvrir le fichier généré
+                const doc = await vscode.workspace.openTextDocument(uri);
+                await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                vscode.window.showInformationMessage('Tests unitaires générés avec succès!');
+            });
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Échec de la génération des tests: ${error.message}`);
+        }
+    });
+    // N'oubliez pas d'ajouter la commande aux subscriptions
+    context.subscriptions.push(generateTestsCmd);
+    // Ajoutez aussi un bouton dans la barre d'état si vous le souhaitez
+    const generateTestsButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    generateTestsButton.text = '$(beaker) Générer Tests';
+    generateTestsButton.tooltip = 'Générer des tests unitaires avec IA';
+    generateTestsButton.command = 'devproductivitytracker.generateTests';
+    generateTestsButton.show();
+    context.subscriptions.push(generateTestsButton);
     const editor = vscode.window.activeTextEditor;
     if (editor) {
         lineTracking.lastCount = editor.document.lineCount;
@@ -526,6 +630,8 @@ async function createNewSessionIfNeeded(context) {
     const token = context.globalState.get('accessToken');
     if (!token || currentSessionActive)
         return;
+    const editor = vscode.window.activeTextEditor;
+    const initialLanguage = editor ? convertLanguageIdToName(editor.document.languageId) : 'Unknown';
     try {
         const response = await fetch('http://localhost:8083/api/sessions', {
             method: 'POST',
@@ -533,17 +639,18 @@ async function createNewSessionIfNeeded(context) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({
+                languageName: initialLanguage
+            })
         });
         if (response.ok) {
             const sessionData = await response.json();
-            currentSessionId = sessionData.id; // Stocke l'ID de la session
-            console.log(`Nouvelle session créée avec ID: ${currentSessionId}`);
+            currentSessionId = sessionData.id;
+            console.log(`Nouvelle session créée avec ID: ${currentSessionId} (Langage: ${initialLanguage})`);
             currentSessionActive = true;
             cumulativeInterruptions = 0;
             lineTracking.totalLines = 0;
             cumulativeErrors = 0;
-            // Stockez aussi dans le contexte global si nécessaire
             await context.globalState.update('currentSessionId', currentSessionId);
         }
     }
@@ -646,5 +753,38 @@ async function callCodeGenerationAPI(context, request) {
         console.error('Erreur lors de l\'appel API:', error);
         throw error;
     }
+}
+async function updateLanguageForSession(context, languageId) {
+    console.log(`langage changer ` + languageId);
+    try {
+        // Convertir l'ID de langage VSCode en nom plus lisible si nécessaire
+        const languageName = convertLanguageIdToName(languageId);
+        await updateCurrentSession(context, {
+            languageName: languageName
+        });
+        console.log(`Langage mis à jour: ${languageName}`);
+    }
+    catch (error) {
+        console.error('Erreur lors de la mise à jour du langage:', error);
+    }
+}
+function convertLanguageIdToName(languageId) {
+    // Mappage des IDs de langage VSCode vers des noms plus lisibles
+    const languageMap = {
+        'javascript': 'JavaScript',
+        'typescript': 'TypeScript',
+        'python': 'Python',
+        'java': 'Java',
+        'csharp': 'C#',
+        'php': 'PHP',
+        'ruby': 'Ruby',
+        'go': 'Go',
+        'rust': 'Rust',
+        'cpp': 'C++',
+        'html': 'HTML',
+        'css': 'CSS',
+        // Ajoutez d'autres mappages au besoin
+    };
+    return languageMap[languageId.toLowerCase()] || languageId;
 }
 //# sourceMappingURL=extension.js.map

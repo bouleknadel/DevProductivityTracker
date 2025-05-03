@@ -159,4 +159,47 @@ public class ChatController {
 
         return code.trim();
     }
+    @PostMapping("/generate-tests")
+    public ResponseEntity<Map<String, String>> generateUnitTests(
+            @RequestBody Map<String, String> request,
+            Principal principal) {
+
+        String code = request.get("code");
+        String programmingLanguage = request.getOrDefault("language", "Java");
+        String testFramework = request.getOrDefault("testFramework",
+                programmingLanguage.equals("Java") ? "JUnit" :
+                        programmingLanguage.equals("JavaScript") ? "Jest" : "");
+
+        // Message système pour la génération de tests
+        String systemMessage = "Tu es un expert en tests unitaires. " +
+                "Règles strictes:\n" +
+                "1. Génère des tests unitaires complets pour le code fourni\n" +
+                "2. Utilise le framework de test: " + testFramework + "\n" +
+                "3. Couvre tous les cas limites et cas d'utilisation\n" +
+                "4. Inclue les assertions nécessaires\n" +
+                "5. Structure les tests de manière logique\n" +
+                "6. Ajoute des commentaires pour expliquer chaque test\n" +
+                "7. Retourne uniquement le code des tests, sans explications supplémentaires\n" +
+                "8. Formatte le code correctement avec une indentation propre";
+
+        String prompt = "Code à tester:\n" + code + "\n\n" +
+                "Langage: " + programmingLanguage + "\n" +
+                "Framework de test: " + testFramework + "\n\n" +
+                "Génère des tests unitaires complets pour ce code.";
+
+        // Appel à l'IA
+        String generatedTests = chatClient.prompt()
+                .system(systemMessage)
+                .user(prompt)
+                .call()
+                .content();
+
+        // Nettoyer la réponse
+        generatedTests = cleanGeneratedCode(generatedTests);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("testCode", generatedTests);
+        response.put("testFramework", testFramework);
+        return ResponseEntity.ok(response);
+    }
 }

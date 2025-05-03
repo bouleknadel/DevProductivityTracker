@@ -1,5 +1,6 @@
 package com.pfa2.PFA2.controllers;
 
+import com.pfa2.PFA2.dto.SessionUpdateDto;
 import com.pfa2.PFA2.entitys.Session;
 import com.pfa2.PFA2.services.SessionService;
 import com.pfa2.PFA2.sockets.SessionUpdatesHandler;
@@ -27,7 +28,7 @@ public class SessionController {
         return sessionService.getSession(id);
     }
     @PutMapping("/{id}")
-    public Session updateSession(@RequestBody Session session,@PathVariable Long id) {
+    public Session updateSession(@RequestBody SessionUpdateDto session, @PathVariable Long id) {
         SessionUpdatesHandler.notifyClients();
         return sessionService.updateSession(session,id);
     }

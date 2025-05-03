@@ -32,7 +32,9 @@ public class Session {
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private AppUser user;
-
+    @ManyToOne
+    @JoinColumn(name = "language_id")
+    private Language language;
     @PrePersist
     public void prePersist() {
         if (startTime == null) {
