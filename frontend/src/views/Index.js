@@ -1,7 +1,7 @@
 import { useState,useEffect } from 'react';
 import classnames from 'classnames';
 import Chart from 'chart.js';
-import { Line, Bar, Pie, Radar } from 'react-chartjs-2';
+import { Line, Bar, Pie, Radar, Doughnut } from 'react-chartjs-2';
 import {getSessionByWeek,getInterupptionByWeek,getCodingHoursByWeek,getCodingHoursByMonth,getSessionDurationStats,
   getConcentrationData,getCodeVsErrorsData
 } from '../services/statsService';
@@ -34,7 +34,73 @@ import {
 
 import Header from 'components/Headers/Header.js';
 
+
+const languageUsageChart = {
+  data: {
+    labels: ['JavaScript', 'Python', 'Java', 'HTML/CSS', 'PHP', 'Autres'],
+    datasets: [
+      {
+        label: "Pourcentage d'utilisation",
+        data: [35, 25, 15, 10, 8, 7],
+        backgroundColor: [
+          'rgba(255, 206, 86, 0.7)', // Jaune pour JavaScript
+          'rgba(75, 192, 192, 0.7)', // Bleu-vert pour Python
+          'rgba(255, 99, 132, 0.7)', // Rouge pour Java
+          'rgba(54, 162, 235, 0.7)', // Bleu pour HTML/CSS
+          'rgba(153, 102, 255, 0.7)', // Violet pour PHP
+          'rgba(201, 203, 207, 0.7)', // Gris pour Autres
+        ],
+        borderColor: [
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(201, 203, 207, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    legend: {
+      position: 'bottom',
+      labels: {
+        fontColor: '#32325d',
+        fontSize: 11,
+        padding: 20,
+      },
+    },
+    title: {
+      display: true,
+      text: 'Répartition des langages',
+      fontColor: '#32325d',
+      fontSize: 16,
+    },
+    tooltips: {
+      callbacks: {
+        label: function (tooltipItem, data) {
+          return (
+            data.labels[tooltipItem.index] +
+            ': ' +
+            data.datasets[0].data[tooltipItem.index] +
+            '%'
+          );
+        },
+      },
+    },
+  },
+};
+
+
 const Index = (props) => {
+
+  const [languageData, setLanguageData] = useState(languageUsageChart.data);
+
+
+
   const [activeNav, setActiveNav] = useState(1);
   const [sessionsData, setSessionsData] = useState(chartExample2.data);
   const [chart4Data, setChart4Data] = useState(sessionDurationChart.data);
@@ -202,10 +268,7 @@ const Index = (props) => {
               </CardHeader>
               <CardBody>
                 <div className="chart">
-                  <Line
-                     data={getChartData()}
-                    options={chartExample1.options}
-                  />
+                  <Line data={getChartData()} options={chartExample1.options} />
                 </div>
               </CardBody>
             </Card>
@@ -224,10 +287,7 @@ const Index = (props) => {
               </CardHeader>
               <CardBody>
                 <div className="chart">
-                  <Bar
-                    data={sessionsData}
-                    options={chartExample2.options}
-                  />
+                  <Bar data={sessionsData} options={chartExample2.options} />
                 </div>
               </CardBody>
             </Card>
@@ -305,6 +365,66 @@ const Index = (props) => {
                     options={codeVsErrorsChart.options}
                   />
                 </div>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row className="mt-5">
+          <Col xl="6">
+            <Card className="shadow">
+              <CardHeader className="bg-transparent">
+                <h6 className="text-uppercase text-muted ls-1 mb-1">Analyse</h6>
+                <h2 className="mb-0">Langages Utilisés</h2>
+              </CardHeader>
+              <CardBody>
+                <Row>
+                  {/* Colonne pour le graphique */}
+                  <Col md="7">
+                    <div className="chart" style={{ height: '250px' }}>
+                      <Doughnut
+                        data={languageData}
+                        options={languageUsageChart.options}
+                      />
+                    </div>
+                  </Col>
+
+                  {/* Colonne pour la légende personnalisée */}
+                  <Col md="5">
+                    <div className="language-legend">
+                      <h4 className="text-muted mb-3">Détails des langages</h4>
+                      <Table className="table-sm">
+                        <tbody>
+                          {languageData.labels.map((label, index) => (
+                            <tr key={index}>
+                              <td>
+                                <span
+                                  className="legend-color mr-2"
+                                  style={{
+                                    display: 'inline-block',
+                                    width: '12px',
+                                    height: '12px',
+                                    backgroundColor:
+                                      languageData.datasets[0].backgroundColor[
+                                        index
+                                      ],
+                                    borderRadius: '2px',
+                                  }}
+                                />
+                                <span className="font-weight-bold">
+                                  {label}
+                                </span>
+                              </td>
+                              <td className="text-right">
+                                {languageData.datasets[0].data[index]}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  </Col>
+                </Row>
               </CardBody>
             </Card>
           </Col>
