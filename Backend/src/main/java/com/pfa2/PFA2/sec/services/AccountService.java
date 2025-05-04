@@ -16,4 +16,6 @@ public interface AccountService {
     AppUser updatePassword(String username, String newPassword);
     List<AppUser> getUsers();
     public void updateUser(Long id,AppUser user);
+    public void updateUserObje(AppUser user);
+
 }

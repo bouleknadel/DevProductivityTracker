@@ -73,3 +73,12 @@ export const getCodeVsErrorsData = async () => {
     throw error;
   }
 };
+export const getLanguageUsageStats = async () => {
+  try {
+    const response = await axiosInstance.get("/api/statistics/language-usage");
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des stats de langage:", error);
+    throw error;
+  }
+};

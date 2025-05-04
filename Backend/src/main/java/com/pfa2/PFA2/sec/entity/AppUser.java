@@ -19,6 +19,7 @@ public class AppUser {
     private Long id;
     private String username;
     private String email;
+    private Integer dailyGoalMinutes = 120;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)

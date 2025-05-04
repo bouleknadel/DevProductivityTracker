@@ -77,4 +77,8 @@ public class AccountServiceImpl implements AccountService {
     public List<AppUser> getUsers() {
         return userAppRepository.findAll();
     }
+    @Override
+    public void updateUserObje(AppUser user) {
+        userAppRepository.save(user);
+    }
 }

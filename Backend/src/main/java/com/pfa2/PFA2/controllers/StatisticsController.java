@@ -29,7 +29,12 @@ public class StatisticsController {
     private AccountService accountService;
     @Autowired
     private SessionRepository sessionRepository;
-
+    @GetMapping("/language-usage")
+    public ResponseEntity<Map<String, Double>> getLanguageUsageStatistics(Principal principal) {
+        AppUser user = accountService.loadUserByUsername(principal.getName());
+        Map<String, Double> languageStats = statisticsService.getLanguageUsageStats(user);
+        return ResponseEntity.ok(languageStats);
+    }
     @GetMapping("/coding")
     public CodingStatsDto getCodingStatistics(Principal principal) {
         return statisticsService.getCodingStatistics(principal);

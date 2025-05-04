@@ -3,7 +3,7 @@ import classnames from 'classnames';
 import Chart from 'chart.js';
 import { Line, Bar, Pie, Radar, Doughnut } from 'react-chartjs-2';
 import {getSessionByWeek,getInterupptionByWeek,getCodingHoursByWeek,getCodingHoursByMonth,getSessionDurationStats,
-  getConcentrationData,getCodeVsErrorsData
+  getConcentrationData,getCodeVsErrorsData,getLanguageUsageStats
 } from '../services/statsService';
 import { useWebSocket } from '../hooks/useWebSocket';
 import {
@@ -111,6 +111,46 @@ const Index = (props) => {
     weekly: [4.5, 6.2, 5.8, 7.1, 5.5, 3.2, 2.0] // Valeurs statiques par défaut (semaine)
   });
   const [foncusTimeData, setFoncusTimeData] = useState(focusTimeChart.data);
+  const fetchLanguageData = async () => {
+    try {
+      const data = await getLanguageUsageStats();
+      
+      // Préparer les couleurs (vous pouvez garder votre palette existante)
+      const colorPalette = [
+        'rgba(255, 206, 86, 0.7)', // Jaune
+        'rgba(75, 192, 192, 0.7)', // Bleu-vert
+        'rgba(255, 99, 132, 0.7)', // Rouge
+        'rgba(54, 162, 235, 0.7)', // Bleu
+        'rgba(153, 102, 255, 0.7)', // Violet
+        'rgba(201, 203, 207, 0.7)', // Gris
+      ];
+
+      const labels = Object.keys(data);
+      const percentages = Object.values(data);
+      
+      const backgroundColors = labels.map((_, index) => 
+        colorPalette[index % colorPalette.length]
+      );
+      
+      const borderColors = backgroundColors.map(color => 
+        color.replace('0.7', '1')
+      );
+
+      setLanguageData({
+        labels,
+        datasets: [{
+          label: "Pourcentage d'utilisation",
+          data: percentages,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+        }]
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des stats de langage:", error);
+    }
+  };
+
   const fetchSessionsData = async () => {
     try {
       const data11 = await getCodingHoursByMonth();
@@ -121,6 +161,7 @@ const Index = (props) => {
       const data4=await getConcentrationData();
       const data5=await getCodeVsErrorsData();
       console.log("data5",data5.errors)
+      fetchLanguageData()
       // Mettre à jour les données avec ce que vous récupérez du serveur
       setSessionsData({
         ...chartExample2.data,
@@ -416,8 +457,10 @@ const Index = (props) => {
                                 </span>
                               </td>
                               <td className="text-right">
-                                {languageData.datasets[0].data[index]}%
-                              </td>
+  {typeof languageData.datasets[0].data[index] === 'number' 
+    ? languageData.datasets[0].data[index].toFixed(2) + '%'
+    : 'N/A'}
+</td>
                             </tr>
                           ))}
                         </tbody>

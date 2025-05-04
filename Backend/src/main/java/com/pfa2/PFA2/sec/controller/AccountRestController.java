@@ -1,8 +1,10 @@
 package com.pfa2.PFA2.sec.controller;
+import com.pfa2.PFA2.dto.DailyGoalDto;
 import com.pfa2.PFA2.sec.entity.AppUser;
 import com.pfa2.PFA2.sec.repo.UserAppRepository;
 import com.pfa2.PFA2.sec.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -47,6 +49,15 @@ public class AccountRestController {
     public AppUser updateUserPass(@RequestBody AppUser user){
         return accountService.updatePassword(user.getEmail(),user.getPassword());
 
+    }
+    @PutMapping("/update-daily-goal")
+    public ResponseEntity<Void> updateDailyGoal(
+            @RequestBody DailyGoalDto goalDto,
+            Principal principal) {
+        AppUser user = accountService.loadUserByUsername(principal.getName());
+        user.setDailyGoalMinutes(goalDto.getDailyGoalMinutes());
+        accountService.updateUserObje(user);
+        return ResponseEntity.ok().build();
     }
     @GetMapping("/profil")
     public AppUser profile(Principal principal){

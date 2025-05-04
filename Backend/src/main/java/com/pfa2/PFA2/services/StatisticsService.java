@@ -1,6 +1,7 @@
 package com.pfa2.PFA2.services;
 
 import com.pfa2.PFA2.dto.CodingStatsDto;
+import com.pfa2.PFA2.entitys.Language;
 import com.pfa2.PFA2.entitys.Session;
 import com.pfa2.PFA2.repositories.SessionRepository;
 import com.pfa2.PFA2.sec.entity.AppUser;
@@ -12,7 +13,10 @@ import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class StatisticsService {
@@ -28,7 +32,9 @@ public class StatisticsService {
         AppUser user = accountService.loadUserByUsername(principal.getName());
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
-
+        int dailyGoal = user.getDailyGoalMinutes() != null ?
+                user.getDailyGoalMinutes() :
+                DAILY_GOAL_MINUTES;
         // Get sessions for today and yesterday
         List<Session> todaySessions = sessionRepository.findByUserAndStartTimeBetween(
                 user,
@@ -88,7 +94,7 @@ public class StatisticsService {
         int productivity = calculateProductivity(totalCodingTimeToday, interruptionsToday);
 
         // Check daily goal
-        boolean goalAchieved = totalCodingTimeToday >= DAILY_GOAL_MINUTES;
+        boolean goalAchieved = totalCodingTimeToday >= dailyGoal;
 
         return new CodingStatsDto(
                 formatTime(totalCodingTimeToday),
@@ -105,7 +111,11 @@ public class StatisticsService {
                 errorsToday,
                 errorsTrend,
                 goalAchieved,
-                goalAchieved ? "✔ Bravo ! Objectif journalier" : "Objectif non atteint"
+                goalAchieved ?
+                        "✔ Bravo ! Objectif journalier atteint" :
+                        String.format("Objectif non atteint (%d/%d min)",
+                                totalCodingTimeToday,
+                                dailyGoal)
         );
     }
 
@@ -179,4 +189,36 @@ public class StatisticsService {
         double productivity = 100 - ((double) interruptions * 5); // Each interruption reduces productivity by 5%
         return (int) Math.max(0, Math.min(100, productivity));
     }
+    public Map<String, Double> getLanguageUsageStats(AppUser user) {
+        List<Session> sessions = sessionRepository.findByUser(user);
+
+        // Compter le nombre total de sessions
+        long totalSessions = sessions.size();
+
+        // Grouper par langage
+        Map<Language, Long> countsByLanguage = sessions.stream()
+                .filter(s -> s.getLanguage() != null)
+                .collect(Collectors.groupingBy(
+                        Session::getLanguage,
+                        Collectors.counting()
+                ));
+
+        // Convertir en pourcentages
+        Map<String, Double> result = new LinkedHashMap<>();
+        countsByLanguage.forEach((language, count) -> {
+            double percentage = (count * 100.0) / totalSessions;
+            result.put(language.getName(), percentage);
+        });
+
+        // Trier par pourcentage décroissant
+        return result.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
+
 }
