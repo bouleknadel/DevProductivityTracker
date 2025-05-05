@@ -3,7 +3,63 @@ import { useEffect, useState } from 'react';
 import { getCodingStats } from '../../services/statsService';
 import axiosInstance from '../../services/axiosInstance';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import axios from "axios";
+import Swal from 'sweetalert2';
+import 'sweetalert2/src/sweetalert2.scss';
+
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Input, Form, FormGroup, Label } from 'reactstrap';
+const showProductivityAlert = async (score) => {
+  try {
+     // Déclencher une notification avec un son standard
+     if (Notification.permission === "granted") {
+      new Notification("Score de productivité", {
+        body: `Votre score est de ${score}%`,
+        icon: "/path/to/icon.png", // Facultatif
+        silent: false // Garantit que le son de notification est joué
+      });
+    } else if (Notification.permission !== "denied") {
+      // Demander la permission
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification("Score de productivité", {
+            body: `Votre score est de ${score}%`,
+            silent: false
+          });
+        }
+      });
+    }
+    // Configuration de la popup avec SweetAlert
+    await Swal.fire({
+      title: 'Résultat de Productivité',
+      html: `
+        <div style="font-size: 24px; color: #2c3e50; margin: 20px 0;">
+          Votre score: <strong style="color: ${getScoreColor(score)}">${score}%</strong>
+        </div>
+        <div style="background: ${getScoreBackground(score)}; 
+             padding: 15px; border-radius: 8px; margin-top: 15px;">
+          ${getScoreMessage(score)}
+        </div>
+      `,
+      icon: getScoreIcon(score),
+      background: '#f8f9fa',
+      showConfirmButton: true,
+      confirmButtonText: 'Fermer',
+      confirmButtonColor: '#3498db'
+    });
+
+   
+
+  } catch (error) {
+    console.error("Erreur dans showProductivityAlert:", error);
+    alert(`Score de productivité: ${score}%`);
+  }
+};
+
+// Fonctions utilitaires existantes
+const getScoreColor = (score) => score > 70 ? '#2ecc71' : score > 50 ? '#f39c12' : '#e74c3c';
+const getScoreBackground = (score) => score > 70 ? '#d5f5e3' : score > 50 ? '#fdebd0' : '#fadbd8';
+const getScoreMessage = (score) => score > 70 ? '🌟 Excellent travail !' : score > 50 ? '👍 Bon effort !' : '💪 Continuez à vous améliorer !';
+const getScoreIcon = (score) => score > 70 ? 'success' : score > 50 ? 'warning' : 'error';
 const Header = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +100,38 @@ const Header = () => {
   }, []);
   useWebSocket('ws://localhost:8083/ws/sessions', (data) => {
     console.log('Reçu une mise à jour via WebSocket:', data);
+      // Vérifier si c'est une notification de fin de session
+      if (data.startsWith("SESSION_COMPLETED:")) {
+        const parts = data.split(":");
+        const sessionInfo = JSON.parse(parts.slice(1).join(":"));
+    
+        // Envoyer les données à l'API de prédiction
+        const sendToPredictionAPI = async () => {
+          try {
+              const response = await axios.post('http://localhost:5000/predict', {
+                  duration: sessionInfo.duration || 0,
+                  interruptions: sessionInfo.interruptions || 0,
+                  linesWritten: sessionInfo.linesWritten || 0,
+                  errors: sessionInfo.errors || 0
+              }, {
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  // withCredentials: false  // Non nécessaire avec la config CORS actuelle
+              });
+      
+              const productivityScore = response.data.productivityScore.toFixed(2);
+              
+              showProductivityAlert(productivityScore);
+              
+          } catch (error) {
+              console.error("Erreur API:", error);
+              alert("Erreur lors du calcul du score de productivité");
+          }
+      };
+    
+        sendToPredictionAPI();
+    }
     const fetchStats = async () => {
       try {
         const data = await getCodingStats();

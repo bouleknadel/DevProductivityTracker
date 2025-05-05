@@ -38,4 +38,17 @@ public class SessionUpdatesHandler extends TextWebSocketHandler {
             }
         }
     }
+    public static void notifySessionCompletion(String sessionInfo) {
+        for (WebSocketSession session : sessions) {
+            try {
+                if (session.isOpen()) {
+                    // Envoyer le message avec les infos de la session
+                    String message = "SESSION_COMPLETED: " + sessionInfo;
+                    session.sendMessage(new TextMessage(message));
+                }
+            } catch (IOException e) {
+                // Gérer l'erreur
+            }
+        }
+    }
 }

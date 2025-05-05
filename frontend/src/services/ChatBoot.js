@@ -21,3 +21,12 @@ export const fetchCodingStatistics = async () => {
     throw error;
   }
 };
+export const fetchOptimalHours = async () => {
+  try {
+    const response = await axiosInstance.post('/optimal-hours');
+    return await response.data;
+  } catch (error) {
+    console.error("Erreur:", error);
+    throw error;
+  }
+};

@@ -29,6 +29,18 @@ public class SessionController {
     }
     @PutMapping("/{id}")
     public Session updateSession(@RequestBody SessionUpdateDto session, @PathVariable Long id) {
+        Session updatedSession = sessionService.updateSession(session, id);
+        if (session.getEndTime() != null) {
+            // Créer un objet JSON avec les infos de la session
+            String sessionInfo = String.format(
+                    "{\"type\":\"SESSION_COMPLETED\",\"duration\":%d,\"linesWritten\":%d,\"errors\":%d,\"interruptions\":%d}",
+                    updatedSession.getDuration(),
+                    updatedSession.getLinesWritten(),
+                    updatedSession.getErrors(),
+                    updatedSession.getInterruptions()
+            );
+            SessionUpdatesHandler.notifySessionCompletion(sessionInfo);
+        }
         SessionUpdatesHandler.notifyClients();
         return sessionService.updateSession(session,id);
     }

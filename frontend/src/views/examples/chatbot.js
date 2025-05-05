@@ -15,7 +15,7 @@ import {
   Media,
   UncontrolledTooltip,
 } from 'reactstrap';
-import { getResponseFromChat,fetchCodingStatistics } from '../../services/ChatBoot'
+import { getResponseFromChat,fetchCodingStatistics,fetchOptimalHours } from '../../services/ChatBoot'
 
 const ChatBot = () => {
   const [codingStats, setCodingStats] = useState(null);
@@ -121,6 +121,7 @@ useEffect(() => {
     },
   ]);
   const [newMessage, setNewMessage] = useState('');
+  const [optimalHours, setOptimalHours] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [suggestions, setSuggestions] = useState([
     'Comment améliorer ma productivité ?',
@@ -138,6 +139,16 @@ useEffect(() => {
 
   useEffect(() => {
     scrollToBottom();
+    const loadOptimalHours = async () => {
+      try {
+        const data = await fetchOptimalHours();
+        setOptimalHours(data);
+      } catch (error) {
+        console.error("Failed to load optimal hours", error);
+      }
+    };
+    
+    loadOptimalHours();
   }, [messages]);
 
   const handleSendMessage = async (e) => {
@@ -361,7 +372,34 @@ useEffect(() => {
                 <h3 className="mb-0">Insights & Conseils</h3>
               </CardHeader>
               <CardBody>
-                <div className="timeline timeline-one-side">
+              <div className="timeline timeline-one-side">
+              <div className="timeline-block">
+  <span className="timeline-step badge-info">
+    <i className="ni ni-watch-time"></i>
+  </span>
+  <div className="timeline-content">
+    <div className="d-flex justify-content-between">
+      <div>
+        <span className="text-muted text-sm">Recommandation</span>
+        <h5 className="mt-1 mb-0">Heures optimales</h5>
+      </div>
+    </div>
+    <p className="text-sm mt-1 mb-0">
+      {optimalHours ? (
+        <>
+          {optimalHours.recommendation}
+          <br />
+          <small className="text-muted">
+            Heures fréquentes: {optimalHours.optimalHours}
+          </small>
+        </>
+      ) : (
+        "Chargement des recommandations..."
+      )}
+    </p>
+  </div>
+</div>
+              
                   <div className="timeline-block">
                     <span className="timeline-step badge-success">
                       <i className="ni ni-bell-55"></i>

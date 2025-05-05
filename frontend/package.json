@@ -61,7 +61,8 @@
     "react-toastify": "^11.0.5",
     "react-use-websocket": "^4.13.0",
     "reactstrap": "8.10.0",
-    "sass": "1.69.5"
+    "sass": "1.69.5",
+    "sweetalert2": "^11.21.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
