@@ -42,6 +42,8 @@ const vscode = __importStar(require("vscode"));
 const http = __importStar(require("http"));
 const url = __importStar(require("url"));
 const sync_request_1 = __importDefault(require("sync-request"));
+const child_process_1 = require("child_process");
+const fs = __importStar(require("fs"));
 const INTERRUPTION_THRESHOLD = 60 * 1000; // 1 minute en millisecondes
 let focusLostTime = null;
 let totalFocusLostTime = 0; // en millisecondes
@@ -56,8 +58,170 @@ let lineTracking = {
 let cumulativeInterruptions = 0; // Ajoutez ceci avec les autres variables globales
 // Ajout d'un compteur cumulatif pour les erreurs
 let cumulativeErrors = 0;
+async function analyzeWithLizard(filePath) {
+    const defaultMetrics = {
+        complexity: 1,
+        duplicates: 0,
+        functions: 1,
+        warnings: 0
+    };
+    try {
+        // Exécuter Lizard avec XML pour les métriques de base
+        const output = (0, child_process_1.execSync)(`lizard "${filePath}" -l python --xml`).toString();
+        console.log("Lizard raw output:", output);
+        // Parseur XML amélioré
+        const getXmlValue = (pattern) => {
+            const match = output.match(pattern);
+            return match ? match[1] : null;
+        };
+        // Extraction des valeurs de base
+        const complexity = parseFloat(getXmlValue(/<average label="CCN" value="([\d.]+)"\/>/) || '1');
+        const functions = parseInt(getXmlValue(/<sum label="Functions" value="(\d+)"\/>/) || '1');
+        // Détection des duplications avec une analyse plus sophistiquée
+        let duplicates = 0;
+        try {
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            // 1. Analyse simple de lignes identiques
+            const lines = fileContent.split('\n');
+            const codeLines = lines.filter(line => {
+                const trimmed = line.trim();
+                return trimmed && !trimmed.startsWith('#');
+            });
+            // Compter les lignes identiques (en ignorant l'indentation)
+            const lineCount = new Map();
+            codeLines.forEach(line => {
+                const trimmed = line.trim();
+                lineCount.set(trimmed, (lineCount.get(trimmed) || 0) + 1);
+            });
+            let duplicatedLines = 0;
+            lineCount.forEach((count, line) => {
+                if (count > 1) {
+                    duplicatedLines += count - 1; // Ne pas compter la première occurrence
+                }
+            });
+            // 2. Analyse des blocs similaires (mini-algorithme naïf de détection de séquences)
+            let blockDuplications = 0;
+            // Fonction pour convertir un code en une représentation "normalisée"
+            // (enlève les espaces, commentaires, etc.) pour mieux comparer
+            const normalizeCode = (code) => {
+                return code
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line && !line.startsWith('#'))
+                    .join(' ');
+            };
+            // Découper le fichier en "morceaux" significatifs à comparer
+            // Par exemple, les fonctions ou blocs de code
+            const blocks = fileContent.split(/\n\s*\n/); // Split sur les lignes vides
+            // Comparer chaque bloc avec les autres
+            const normalizedBlocks = blocks.map(normalizeCode).filter(block => block.length > 0);
+            for (let i = 0; i < normalizedBlocks.length; i++) {
+                for (let j = i + 1; j < normalizedBlocks.length; j++) {
+                    // Si les blocs sont identiques ou très similaires après normalisation
+                    if (normalizedBlocks[i] === normalizedBlocks[j]) {
+                        blockDuplications++;
+                    }
+                }
+            }
+            // Calculer une moyenne pondérée des deux types de duplications
+            const lineBasedDuplication = codeLines.length > 0 ? duplicatedLines / codeLines.length : 0;
+            const blockBasedDuplication = normalizedBlocks.length > 0 ?
+                blockDuplications / normalizedBlocks.length : 0;
+            // Pondération : 70% pour les lignes, 30% pour les blocs
+            const weightedDuplication = lineBasedDuplication * 0.7 + blockBasedDuplication * 0.3;
+            // Convertir en pourcentage
+            duplicates = Math.round(weightedDuplication * 100);
+            console.log(`Duplicate analysis: ${duplicatedLines} duplicated lines, ${blockDuplications} duplicated blocks, ${duplicates}% combined duplication`);
+        }
+        catch (dupError) {
+            console.error("Duplication analysis failed:", dupError);
+            duplicates = 0;
+        }
+        return {
+            complexity: isNaN(complexity) ? defaultMetrics.complexity : complexity,
+            duplicates, // Le pourcentage de lignes dupliquées
+            functions: isNaN(functions) ? defaultMetrics.functions : functions,
+            warnings: defaultMetrics.warnings
+        };
+    }
+    catch (error) {
+        console.error("Lizard analysis error:", error);
+        return defaultMetrics;
+    }
+}
+// Fonction utilitaire pour déterminer la classe CSS
+function getSeverityClass(value, goodThreshold, warnThreshold) {
+    if (value <= goodThreshold)
+        return 'good';
+    if (value <= warnThreshold)
+        return 'warning';
+    return 'bad';
+}
+function showMetricsWebview(context, metrics) {
+    const panel = vscode.window.createWebviewPanel('codeMetrics', 'Lizard Code Metrics', vscode.ViewColumn.Beside, { enableScripts: true });
+    panel.webview.html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: 'Segoe UI', sans-serif;
+                    padding: 20px;
+                    background: var(--vscode-editor-background);
+                    color: var(--vscode-editor-foreground);
+                }
+                .metric-card {
+                    background: var(--vscode-editorWidget-background);
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 15px 0;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .metric-value {
+                    font-size: 28px;
+                    font-weight: bold;
+                    margin: 10px 0;
+                }
+                .good { color: #4CAF50; }
+                .warning { color: #FFC107; }
+                .bad { color: #F44336; }
+            </style>
+        </head>
+        <body>
+            <h1>🐍 Lizard Code Analysis</h1>
+            
+            <div class="metric-card">
+                <h3>Average Cyclomatic Complexity</h3>
+                <div class="metric-value ${getSeverityClass(metrics.complexity, 5, 10)}">
+                    ${metrics.complexity.toFixed(1)}
+                </div>
+                <p>Lower is better (≤5 ideal, ≤10 acceptable)</p>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Duplicate Rate</h3>
+                <div class="metric-value ${getSeverityClass(metrics.duplicates, 5, 15)}">
+                    ${metrics.duplicates.toFixed(1)}%
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Functions Analyzed</h3>
+                <div class="metric-value">${metrics.functions}</div>
+            </div>
+        </body>
+        </html>
+    `;
+}
 function activate(context) {
     console.log('Extension "devproductivitytracker" is now active!');
+    context.subscriptions.push(vscode.commands.registerCommand('devproductivitytracker.showCodeMetrics', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor)
+            return;
+        const metrics = analyzeWithLizard(editor.document.uri.fsPath);
+        showMetricsWebview(context, await metrics);
+    }));
     // Dans la fonction activate()
     vscode.window.onDidChangeActiveTextEditor(async (editor) => {
         if (editor && currentSessionActive) {

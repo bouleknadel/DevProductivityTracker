@@ -38,7 +38,7 @@ const AdminNavbar = () => {
             <img
               alt="logo"
               src={require('../../assets/img/brand/logosite.png')}
-              style={{ height: '50px', width: 'auto' }}
+              style={{ height: '40px', width: '300px' }}
             />
           </NavbarBrand>
 

@@ -19,6 +19,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "devproductivitytracker.showCodeMetrics",
+        "title": "Show Code Metrics",
+        "category": "Dev Productivity"
+      },
+      {
         "command": "devproductivitytracker.generateTests",
         "title": "Generate Unit Tests",
         "category": "Dev Productivity"
@@ -51,6 +56,11 @@
     ],
     "menus": {
       "editor/context": [
+        {
+          "command": "devproductivitytracker.showCodeMetrics",
+          "group": "3_analysis",
+          "when": "editorTextFocus"
+        },
         {
           "command": "devproductivitytracker.generateTests",
           "group": "2_generation",
@@ -86,6 +96,10 @@
         }
       ],
       "devproductivitytracker.menu": [
+        {
+          "command": "devproductivitytracker.showCodeMetrics",
+          "group": "3_analysis"
+        },
         {
           "command": "devproductivitytracker.generateTests",
           "group": "1_analysis"
@@ -123,6 +137,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/tmp": "^0.2.6",
     "@types/vscode": "^1.99.0",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@vscode/test-electron": "^2.4.1",
@@ -133,6 +148,8 @@
     "@types/node-fetch": "^2.6.12",
     "node-fetch": "^3.3.2",
     "sync-request": "^6.1.0",
+    "tmp": "^0.2.3",
+    "xmldom": "^0.6.0",
     "zod": "^3.22.4"
   },
   "icon": "images/icon.png",
